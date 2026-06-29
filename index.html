@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>六脈神劍 · 求敗九劍 · 十八漲 ｜ 台股選股終端</title>
+<title>六賣神賣 · 求敗九賣 · 十八漲 ｜ 台股選股終端</title>
 <style>
   :root{
     --bg:#14161b;
@@ -185,7 +185,7 @@
 
   <header>
     <div class="eyebrow">TAIWAN EQUITY SCREENER · 即時連線 TWSE / TPEx 公開資料</div>
-    <h1><span class="accent">六脈神劍</span> · 求敗九劍 · 十八漲</h1>
+    <h1><span class="accent">六賣神見</span> · 求敗九見 · 十八漲</h1>
     <div class="subtitle">三套經典短線技術面選股法則的台股篩選終端 — 資料於您的瀏覽器內即時抓取並計算，不經第三方伺服器。</div>
   </header>
 
@@ -317,8 +317,8 @@
 
   <!-- ===== Tabs ===== -->
   <div class="tabs">
-    <div class="tab active" data-tab="liumai">六脈神劍 <span style="color:var(--muted)">(6)</span></div>
-    <div class="tab" data-tab="qiubai">求敗九劍 <span style="color:var(--muted)">(9)</span></div>
+    <div class="tab active" data-tab="liumai">六賣神見 <span style="color:var(--muted)">(6)</span></div>
+    <div class="tab" data-tab="qiubai">求敗九見 <span style="color:var(--muted)">(9)</span></div>
     <div class="tab" data-tab="shibazhang">十八漲 <span style="color:var(--muted)">(18)</span></div>
     <div class="tab" data-tab="probability">多空勝率</div>
     <div class="tab" data-tab="portfolio">持股追蹤</div>
@@ -635,7 +635,7 @@ const EPS = 0.005;
 function buildRules(turnoverFactor){
   const TH = f => f*turnoverFactor;
 
-  // ---------- 六脈神劍 ----------
+  // ---------- 六賣神見 ----------
   const swords = [
     {id:'s1', name:'第一劍【翻多】', cond:'5K>5D 黃金交叉，且前一日5D剛轉折向上', fn:d=>{
       const K0=v(d.K5,0),D0=v(d.D5,0),K1=v(d.K5,1),D1=v(d.D5,1),D2=v(d.D5,2);
