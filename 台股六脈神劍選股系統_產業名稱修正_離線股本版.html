@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>六脈神劍 · 求敗九劍 · 十八漲 ｜ 台股選股終端</title>
+<style>
+  :root{
+    --bg:#14161b;
+    --panel:#1b1e25;
+    --panel2:#20242c;
+    --border:#2a2e38;
+    --text:#e7e5e0;
+    --muted:#8b8f9b;
+    --red:#e0483e;     /* 漲/多/強 */
+    --red-dim:#3a2422;
+    --green:#2f9e74;   /* 跌/空/弱 */
+    --green-dim:#1f3530;
+    --amber:#d9a441;
+    --seal:#b3392f;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --sans:'PingFang TC','Microsoft JhengHei','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); line-height:1.5;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* ---- Header ---- */
+  header{display:flex; flex-direction:column; gap:6px; margin-bottom:24px; border-bottom:1px solid var(--border); padding-bottom:20px;}
+  .eyebrow{font-family:var(--mono); font-size:12px; color:var(--amber); letter-spacing:.12em;}
+  h1{margin:2px 0 0; font-size:28px; font-weight:800; letter-spacing:.02em;}
+  h1 span.accent{color:var(--red);}
+  .subtitle{color:var(--muted); font-size:13.5px;}
+
+  /* ---- Seal badge (signature element) ---- */
+  .seal{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:46px; height:46px; padding:0 6px;
+    background:var(--seal); color:#fff3ee;
+    border:1.5px solid #f0c9c1; border-radius:4px;
+    font-family:var(--mono); font-weight:700; font-size:13px;
+    transform:rotate(-2.5deg); flex-shrink:0;
+    box-shadow:0 2px 0 rgba(0,0,0,.3);
+  }
+  .seal.neg{background:var(--green); border-color:#bfe9d8;}
+
+  /* ---- Panels ---- */
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:18px;}
+  .panel h2{font-size:15px; margin:0 0 12px; color:var(--text); display:flex; align-items:center; gap:8px;}
+  .panel h2 .tag{font-family:var(--mono); font-size:11px; color:var(--muted); border:1px solid var(--border); padding:1px 6px; border-radius:4px;}
+
+  label{font-size:12.5px; color:var(--muted); display:block; margin-bottom:5px;}
+  textarea, input[type=text], input[type=number]{
+    width:100%; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:7px; padding:9px 11px; font-family:var(--mono); font-size:12.5px; resize:vertical;
+  }
+  textarea{min-height:78px;}
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .col{flex:1; min-width:220px;}
+  .field{margin-bottom:12px;}
+
+  button{
+    font-family:var(--sans); font-weight:600; font-size:13.5px; cursor:pointer;
+    border-radius:7px; border:1px solid var(--border); padding:9px 16px;
+    background:var(--panel2); color:var(--text); transition:.15s;
+  }
+  button:hover{border-color:var(--amber);}
+  button.primary{background:var(--red); border-color:var(--red); color:#fff;}
+  button.primary:hover{background:#c93e35;}
+  button.ghost{background:transparent;}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btnrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px;}
+
+  .hint{font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.5;}
+  .hint b{color:var(--amber); font-weight:600;}
+
+  /* slider */
+  input[type=range]{width:100%; accent-color:var(--red);}
+  .sliderval{font-family:var(--mono); color:var(--red); font-weight:700;}
+
+  /* progress */
+  .progress-wrap{display:none; margin-top:14px;}
+  .progress-bar{height:6px; background:var(--panel2); border-radius:4px; overflow:hidden; border:1px solid var(--border);}
+  .progress-bar > div{height:100%; width:0%; background:var(--red); transition:width .2s;}
+  .progress-text{font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:6px;}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex; gap:8px; margin:26px 0 14px; border-bottom:1px solid var(--border);}
+  .tab{padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;}
+  .tab.active{color:var(--text); border-bottom-color:var(--red);}
+  .tabpanel{display:none;}
+  .tabpanel.active{display:block;}
+
+  .ruleblock{margin-bottom:16px;}
+  .rulehead{display:flex; align-items:center; gap:12px; margin-bottom:8px;}
+  .ruletitle{font-size:14.5px; font-weight:700;}
+  .rulecond{font-size:11.5px; color:var(--muted); font-family:var(--mono);}
+  .rulecount{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--amber); border:1px solid var(--border); padding:2px 8px; border-radius:20px; flex-shrink:0;}
+  .blockctrl{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .blockctrl button{padding:4px 10px; font-size:11.5px;}
+  .global-tools{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .global-tools select{background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:7px; padding:8px 10px;}
+  .dirchip{display:inline-flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; border-radius:999px; padding:2px 8px; margin-left:8px; border:1px solid var(--border);}
+  .dirchip.bull{color:var(--red); background:var(--red-dim);}
+  .dirchip.bear{color:var(--green); background:var(--green-dim);}
+  .dirchip.ref{color:var(--amber); background:#352b17;}
+  .industry-toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .industry-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px;}
+  .industry-card{display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--border); background:var(--panel2); border-radius:8px; padding:8px 10px; cursor:pointer;}
+  .industry-card:hover{border-color:var(--amber);}
+  .industry-card input{margin-right:6px;}
+  .industry-card .cnt{font-family:var(--mono); font-size:11px; color:var(--amber);}
+  .stock-links{display:flex; flex-direction:column; gap:2px;}
+  .stock-links .code-link{font-weight:700;}
+  .mini-links{display:flex; gap:6px; font-size:10.5px; font-family:var(--sans);}
+  .mini-links a{color:var(--muted);}
+  .mini-links a:hover{color:var(--amber);}
+
+  .metric-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin:10px 0 14px;}
+  .metric-card{background:var(--panel2); border:1px solid var(--border); border-radius:9px; padding:10px 12px;}
+  .metric-card.clickable{cursor:pointer; transition:.15s; position:relative;}
+  .metric-card.clickable:hover{border-color:var(--amber); transform:translateY(-1px);}
+  .metric-card.active{border-color:var(--red); box-shadow:0 0 0 1px rgba(224,72,62,.35) inset;}
+  .metric-card.active::after{content:'目前篩選'; position:absolute; top:8px; right:10px; font-size:10px; color:var(--amber); font-family:var(--mono);}
+  .metric-card .label{font-size:11px; color:var(--muted);}
+  .metric-card .value{font-family:var(--mono); font-size:20px; font-weight:800; margin-top:2px;}
+  .metric-card .sub{font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .prob-section{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:12px 0 16px;}
+  .prob-section-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .prob-section-title{font-weight:800; font-size:14px;}
+  .prob-section-count{margin-left:auto; color:var(--amber); font-family:var(--mono); font-size:12px; border:1px solid var(--border); padding:2px 8px; border-radius:999px;}
+  .prob-section.empty{opacity:.55;}
+  .prob-mode-select{background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:7px; padding:6px 10px; font-family:var(--sans);}
+  .score-bull{color:var(--red);} .score-bear{color:var(--green);} .score-warn{color:var(--amber);} .score-neutral{color:var(--text);}
+  .probbar{height:7px; background:#0f1014; border:1px solid var(--border); border-radius:999px; overflow:hidden; min-width:110px;}
+  .probbar > div{height:100%; background:var(--red);}
+  .probbar.bear > div{background:var(--green);}
+  .status-pill{display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:11px; font-family:var(--mono); border:1px solid var(--border);}
+  .status-pill.buy{color:var(--red); background:var(--red-dim);} .status-pill.sell{color:var(--green); background:var(--green-dim);} .status-pill.watch{color:var(--amber); background:#352b17;}
+  .portfolio-tools{display:grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr); gap:14px;}
+  .portfolio-tools textarea{min-height:118px;}
+  @media(max-width:760px){.portfolio-tools{grid-template-columns:1fr;}}
+
+  .rulebody.collapsed{display:none;}
+  .collapse-btn{min-width:78px;}
+  .quick-filter-panel{display:none; margin:10px 0 14px; border:1px solid var(--border); border-radius:9px; background:var(--panel2); padding:10px 12px;}
+  .quick-filter-panel.active{display:block;}
+  .filter-chip{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--panel2); color:var(--text); border-radius:999px; padding:5px 10px; font-size:12px; cursor:pointer;}
+  .filter-chip:hover{border-color:var(--amber);}
+  .filter-chip.active{border-color:var(--amber); color:var(--amber);}
+  .track-btn{padding:4px 9px; font-size:11px; border-color:var(--amber); color:var(--amber); background:transparent;}
+  .track-btn:hover{background:#352b17;}
+  .quick-buy-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:10px;}
+  .quick-buy-grid input{font-family:var(--mono);}
+  .money-cell{font-family:var(--mono); color:var(--amber);}
+
+
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;}
+  th,td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;}
+  th:nth-child(2),td:nth-child(2){text-align:left;}
+  th{color:var(--muted); font-weight:600; font-size:11px;}
+  tr:hover td{background:var(--panel2);}
+  .up{color:var(--red);} .down{color:var(--green);}
+  .empty-row{color:var(--muted); font-style:normal; padding:10px 0; font-size:12.5px;}
+
+  .log{
+    background:#0f1014; border:1px solid var(--border); border-radius:8px; padding:10px 12px;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted); max-height:160px; overflow-y:auto; margin-top:10px; display:none;
+  }
+  .log div{margin-bottom:2px;}
+  .log .err{color:var(--green);}
+  .log .ok{color:var(--text);}
+
+  footer{margin-top:30px; color:var(--muted); font-size:11.5px; border-top:1px solid var(--border); padding-top:14px;}
+  a{color:var(--amber); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">TAIWAN EQUITY SCREENER · 即時連線 TWSE / TPEx 公開資料</div>
+    <h1><span class="accent">六脈神劍</span> · 求敗九劍 · 十八漲</h1>
+    <div class="subtitle">三套經典短線技術面選股法則的台股篩選終端 — 資料於您的瀏覽器內即時抓取並計算，不經第三方伺服器。</div>
+  </header>
+
+  <!-- ===== Control Panel ===== -->
+  <div class="panel">
+    <h2>① 股票池與資料來源 <span class="tag">逐股查詢 TWSE / TPEx</span></h2>
+    <div class="field">
+      <label>股票代號清單（預設台灣50成分股；可自行替換、擴充，或改用 CSV / 全市場下載資料）</label>
+      <textarea id="tickerInput">2330,2454,2308,2317,3711,2303,2327,2383,2891,3037,2345,2881,2882,2382,3017,2887,2885,1303,2344,2412,2884,2886,2357,2890,2408,6669,2883,3231,3008,4958,2368,2301,2059,3443,3661,1216,3665,2449,2892,2880,3653,7769,2360,5880,2395,8046,2603,4904,3045,6505</textarea>
+      <div class="hint">預設為台灣50成分股清單，適合先快速測試多空分類與持股追蹤；若要跑全市場，建議使用 ZIP 內 downloader 產生 history.csv 後再匯入，避免瀏覽器 CORS 與大量請求問題。</div>
+      <div class="btnrow" style="margin-top:8px;">
+        <button class="ghost" id="fetchAllMarketBtn">抓取全市場代號（上市+上櫃普通股）</button>
+        <span class="hint" id="marketListStatus" style="margin:0;"></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>股本對照表（選填，CSV：代號,股本(億)；每行一筆）— 用於計算周轉率，未提供則周轉率條件自動略過</label>
+      <textarea id="capitalInput" placeholder="2330,2593.04&#10;2317,386.85&#10;2454,80.66"></textarea>
+      <div class="hint">周轉率＝日成交量(張) ÷ 股本(億) ÷ 100。沒有股本資料時，相關規則中的周轉率門檻會被跳過（不影響其他四項條件判斷），結果旁會標示 ⚠️。</div>
+    </div>
+
+    <div class="field">
+      <label>產業對照表（選填，CSV：代號,產業；每行一筆）— 用於分類顯示與篩選結果，未提供則歸為「未分類」</label>
+      <textarea id="industryInput" placeholder="2330,半導體&#10;2317,電子代工&#10;2891,金融"></textarea>
+      <div class="hint">若您的CSV上傳檔案本身已有 <code>industry</code> 欄位，會優先使用該欄位的值；此處對照表僅作為沒有該欄位時的備用來源。</div>
+    </div>
+
+    <div class="field">
+      <label>周轉率門檻係數 <span class="sliderval" id="turnoverFactorLabel">1.00×</span></label>
+      <input type="range" id="turnoverFactor" min="0.2" max="3" step="0.05" value="1">
+      <div class="hint">原文檔門檻（如 >0.1、>0.05）會乘上此係數。調高 → 篩選更嚴格、檔數變少；調低 → 篩選更寬鬆、檔數變多。這對應原文「用周轉率控制檔數約50至100支股票」的精神。</div>
+    </div>
+
+    <div class="btnrow">
+      <button class="primary" id="fetchBtn">開始抓取並選股（瀏覽器即時抓取）</button>
+      <button class="ghost" id="cancelBtn" disabled>取消</button>
+      <button class="ghost" id="logToggle">顯示 / 隱藏 抓取紀錄</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar"><div id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">尚未開始</div>
+    </div>
+    <div class="log" id="logBox"></div>
+  </div>
+
+  <div class="panel">
+    <h2>② 上傳離線下載的CSV資料 <span class="tag">建議方式，可繞過瀏覽器CORS限制</span></h2>
+    <div class="hint" style="margin-bottom:10px;">
+      若上方瀏覽器即時抓取因 CORS 政策被擋（常見於 TPEx 上櫃資料），可改用 ZIP 內的 Python 腳本在本機批次下載資料成 CSV，再上傳到這裡分析。新版下載器預設 <b>只抓上市/上櫃普通股</b>，會排除 ETF、ETN、權證、債券等非普通股商品，並在 history.csv 內直接輸出 <code>capital</code> 股本欄位，HTML 匯入後可離線計算週轉率。建議指令：<code>python tw_stock_downloader.py --all --out history.csv --months 4 --sleep 0.8 --resume</code>。若真的要額外納入 ETF，再加 <code>--include-etf</code>。
+    </div>
+    <div class="field">
+      <label>CSV 檔案（主要上傳 history.csv；新版格式：code,name,market,industry,capital,date,open,high,low,close,volume）</label>
+      <input type="file" id="csvFileInput" accept=".csv,text/csv">
+      <div class="hint">選擇檔案後會立即讀入瀏覽器記憶體。<b>一般只需要上傳 history.csv</b>，因為新版 downloader 已把產業與股本直接寫進 history.csv。<code>stock_meta.csv</code> 是給你檢查/備查用，不需要放到特定資料夾，也不需要另外上傳。</div>
+    </div>
+    <div class="field">
+      <label>CSV 文字備援貼上區（選填）— 若瀏覽器無法讀取檔案，請用記事本打開 history.csv，全選複製後貼到這裡</label>
+      <textarea id="csvPasteInput" placeholder="code,name,market,industry,capital,date,open,high,low,close,volume&#10;2330,台積電,twse,半導體,2593.04,2026-06-01,900,910,895,905,12345678" style="min-height:88px;"></textarea>
+      <div class="hint">優先順序：貼上區內容 &gt; 已快取的檔案內容 &gt; 重新讀取目前選取檔案。</div>
+    </div>
+    <div class="btnrow">
+      <button class="primary" id="csvRunBtn">用CSV資料選股</button>
+      <button class="ghost" id="csvClearBtn" type="button">清除CSV快取/貼上內容</button>
+      <span class="hint" id="csvStatus" style="margin:0;"></span>
+    </div>
+  </div>
+
+  <!-- ===== 產業篩選（資料載入後動態產生）===== -->
+  <div class="panel" id="industryFilterPanel" style="display:none;"></div>
+
+  <div class="panel" id="selectionToolsPanel">
+    <h2>外部資料與全局勾選 <span class="tag">目前分頁可用</span></h2>
+    <div class="global-tools">
+      <button class="ghost" id="globalSelAll">目前分頁全選</button>
+      <button class="ghost" id="globalSelNone">目前分頁全不選</button>
+      <button class="ghost" id="globalShowChecked">只看已勾選</button>
+      <button class="ghost" id="globalClearRowFilter">清除篩選</button>
+      <label style="margin:0; display:inline-flex; align-items:center; gap:8px; color:var(--muted);">外部資料來源
+        <select id="externalSiteSelect">
+          <option value="yahoo">Yahoo 股市</option>
+          <option value="goodinfo">Goodinfo</option>
+          <option value="cmoney">CMoney 股市爆料同學會</option>
+          <option value="fugle">Fugle</option>
+          <option value="tradingview">TradingView</option>
+        </select>
+      </label>
+      <button class="primary" id="globalOpenSelected">開啟目前分頁所選</button>
+      <span class="hint" style="margin:0;">每列代號也可直接點 Yahoo，或點下方小連結開其他網站。</span>
+    </div>
+  </div>
+
+
+  <div class="panel" id="portfolioPanel">
+    <h2>已買進股票追蹤 <span class="tag">多空機率 / 賣出或贖回提示</span></h2>
+    <div class="portfolio-tools">
+      <div>
+        <label>快速加入 / 更新持股（可只填購買金額，股數會用買進價換算）</label>
+        <div class="quick-buy-grid">
+          <input type="text" id="quickBuyCode" placeholder="代號 3481">
+          <input type="number" id="quickBuyPrice" step="0.01" placeholder="買進價">
+          <input type="number" id="quickBuyAmount" step="1" placeholder="購買金額">
+          <input type="number" id="quickBuyQty" step="1" placeholder="股數，可空白">
+          <input type="text" id="quickBuyNote" placeholder="備註">
+        </div>
+        <div class="btnrow" style="margin-bottom:10px;"><button class="primary" id="quickAddPortfolioBtn">加入 / 更新持股</button><button class="ghost" id="clearQuickBuyBtn">清空填寫</button></div>
+        <label>持股清單（CSV：代號,買進價,股數,購買金額,備註；股數或購買金額可留空）</label>
+        <textarea id="portfolioInput" placeholder="3481,18.5,1000,18500,面板追蹤&#10;2330,950,,95000,長線核心"></textarea>
+        <div class="hint">資料會存在本機瀏覽器 localStorage。追蹤前請先完成一次選股分析，系統會用最新收盤與多空規則估算機率。舊格式「代號,買進價,股數,備註」仍可讀取。</div>
+      </div>
+      <div>
+        <label>提示門檻</label>
+        <div class="row">
+          <div class="col"><label>賣出/贖回空方機率 ≥ <span class="sliderval" id="sellProbLabel">70%</span></label><input type="range" id="sellProbThreshold" min="50" max="90" step="5" value="70"></div>
+          <div class="col"><label>停損跌幅 ≤ <span class="sliderval" id="stopLossLabel">-8%</span></label><input type="range" id="stopLossThreshold" min="-20" max="-3" step="1" value="-8"></div>
+        </div>
+        <div class="btnrow">
+          <button class="ghost" id="savePortfolioBtn">儲存持股</button>
+          <button class="primary" id="trackPortfolioBtn">更新追蹤</button>
+          <button class="ghost" id="importSelectedPortfolioBtn">匯入目前勾選</button>
+          <button class="ghost" id="clearPortfolioBtn">清空持股</button>
+        </div>
+        <div class="hint">「匯入目前勾選」會把目前分頁勾選的代號加入持股清單，買進價可之後手動補。</div>
+      </div>
+    </div>
+    <div id="portfolioResult" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ===== Tabs ===== -->
+  <div class="tabs">
+    <div class="tab active" data-tab="liumai">六脈神劍 <span style="color:var(--muted)">(6)</span></div>
+    <div class="tab" data-tab="qiubai">求敗九劍 <span style="color:var(--muted)">(9)</span></div>
+    <div class="tab" data-tab="shibazhang">十八漲 <span style="color:var(--muted)">(18)</span></div>
+    <div class="tab" data-tab="probability">多空勝率</div>
+    <div class="tab" data-tab="portfolio">持股追蹤</div>
+  </div>
+
+  <div class="tabpanel active" id="tab-liumai"></div>
+  <div class="tabpanel" id="tab-qiubai"></div>
+  <div class="tabpanel" id="tab-shibazhang"></div>
+  <div class="tabpanel" id="tab-probability"></div>
+  <div class="tabpanel" id="tab-portfolio"></div>
+
+  <footer>
+    資料來源：證交所(TWSE) <code>STOCK_DAY</code> 與櫃買中心(TPEx) <code>st43_result</code> 公開歷史行情 API，於瀏覽器端直接呼叫。所有指標（KD、MACD、均價、乖離率）皆以擷取到的近期收盤資料現算，期初數值（前數日）可能因暖機不足而略有失真，建議股票池資料抓取後檢查筆數是否足夠（建議 ≥ 30 個交易日）。本工具僅為技術指標篩選輔助，不構成投資建議。
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   1. 基礎工具
+============================================================ */
+function $(id){return document.getElementById(id);}
+function log(msg, cls){
+  const box = $('logBox');
+  const d = document.createElement('div');
+  d.className = cls||'';
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+function parseNum(s){
+  if(s==null) return null;
+  const v = parseFloat(String(s).replace(/,/g,'').trim());
+  return isNaN(v) ? null : v;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+const INDUSTRY_CODE_NAME = {
+  '01':'水泥工業','02':'食品工業','03':'塑膠工業','04':'紡織纖維','05':'電機機械','06':'電器電纜','07':'化學工業','08':'生技醫療','09':'玻璃陶瓷','10':'造紙工業','11':'鋼鐵工業','12':'橡膠工業','13':'汽車工業','14':'半導體業','15':'電腦及週邊設備業','16':'光電業','17':'通信網路業','18':'電子零組件業','19':'電子通路業','20':'資訊服務業','21':'其他電子業','22':'建材營造業','23':'航運業','24':'觀光餐旅業','25':'金融保險業','26':'貿易百貨業','27':'油電燃氣業','28':'其他業','29':'存託憑證','30':'ETF','31':'受益證券','32':'ETN','33':'認購售權證','34':'指數類','35':'綠能環保','36':'數位雲端','37':'運動休閒','38':'居家生活','80':'管理股票','91':'市認購','92':'市認售','93':'市牛證','94':'市熊證','95':'市展延牛證','96':'市展延熊證','97':'市可展延牛證','98':'市可展延熊證'
+};
+
+function normalizeIndustryName(value){
+  let raw = String(value==null ? '' : value).trim();
+  if(!raw) return '未分類';
+  const m = raw.match(/^(\d{1,2})(?:\.0)?$/);
+  if(m){
+    const code = m[1].padStart(2,'0');
+    return INDUSTRY_CODE_NAME[code] ? `${code} ${INDUSTRY_CODE_NAME[code]}` : code;
+  }
+  const m2 = raw.match(/^(\d{1,2})\s*[\-_/：:]\s*(.+)$/);
+  if(m2){
+    const code = m2[1].padStart(2,'0');
+    const name = m2[2].trim() || INDUSTRY_CODE_NAME[code] || '';
+    return name ? `${code} ${name}` : code;
+  }
+  return raw;
+}
+
+function parseTickerList(){
+  return $('tickerInput').value
+    .split(/[\s,，、\n]+/).map(s=>s.trim()).filter(Boolean);
+}
+function parseIndustryMap(){
+  const map = {};
+  $('industryInput').value.split('\n').forEach(line=>{
+    const parts = line.split(',').map(s=>s.trim());
+    if(parts.length>=2 && parts[0] && parts[1]){
+      map[parts[0]] = normalizeIndustryName(parts[1]);
+    }
+  });
+  return map;
+}
+
+function parseCapitalMap(){
+  const map = {};
+  $('capitalInput').value.split('\n').forEach(line=>{
+    const parts = line.split(',').map(s=>s.trim());
+    if(parts.length>=2 && parts[0]){
+      const v = parseNum(parts[1]);
+      if(v!=null) map[parts[0]] = v;
+    }
+  });
+  return map;
+}
+
+/* 民國年月清單：含本月起回溯 monthsBack 個月，回傳 [{ym:'YYYYMM', roc:'YYY/MM'}] */
+function recentMonths(monthsBack){
+  const out = [];
+  const now = new Date();
+  let y = now.getFullYear(), m = now.getMonth()+1;
+  for(let i=0;i<monthsBack;i++){
+    const yy = String(y), mm = String(m).padStart(2,'0');
+    out.push({ym:`${yy}${mm}`, roc:`${y-1911}/${mm}`});
+    m--; if(m===0){m=12; y--;}
+  }
+  return out;
+}
+
+/* ============================================================
+   1b. 全市場代號清單 (TWSE / TPEx 官方 OpenAPI)
+============================================================ */
+async function fetchTWSEMarketCodes(){
+  // 改用與個股查詢同網域(www.twse.com.tw)的批量端點，CORS設定理論上一致
+  const url = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=json';
+  const res = await fetch(url);
+  const json = await res.json();
+  const rows = json.data || json.tables?.[0]?.data || [];
+  const codes = rows.map(r=>String(r[0]).trim()).filter(c=>/^\d{4}$/.test(c));
+  return Array.from(new Set(codes));
+}
+
+async function fetchTPExMarketCodes(){
+  // 改用與個股查詢同網域(www.tpex.org.tw)的批量端點
+  const url = 'https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw';
+  const res = await fetch(url);
+  const json = await res.json();
+  const rows = json.aaData || [];
+  const codes = [];
+  rows.forEach(row=>{
+    const found = row.find(cell=>/^\d{4}$/.test(String(cell).trim()));
+    if(found) codes.push(String(found).trim());
+  });
+  return Array.from(new Set(codes));
+}
+
+async function fetchAllMarketList(){
+  const btn = $('fetchAllMarketBtn');
+  const status = $('marketListStatus');
+  btn.disabled = true;
+  $('logBox').style.display = 'block';
+  log('--- 開始抓取全市場代號 ---');
+
+  let twseCodes = [], tpexCodes = [];
+  let twseErr = null, tpexErr = null;
+
+  log('呼叫 TWSE 批量端點：https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=json');
+  try{
+    twseCodes = await fetchTWSEMarketCodes();
+    log(`✓ TWSE 成功，取得 ${twseCodes.length} 檔`, 'ok');
+  }catch(e){
+    twseErr = e.message || String(e);
+    log(`✗ TWSE 失敗：${twseErr}`, 'err');
+  }
+
+  log('呼叫 TPEx 批量端點：https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php');
+  try{
+    tpexCodes = await fetchTPExMarketCodes();
+    log(`✓ TPEx 成功，取得 ${tpexCodes.length} 檔`, 'ok');
+  }catch(e){
+    tpexErr = e.message || String(e);
+    log(`✗ TPEx 失敗：${tpexErr}`, 'err');
+  }
+
+  const all = Array.from(new Set([...twseCodes, ...tpexCodes])).sort();
+  if(!all.length){
+    status.textContent = `⚠️ 兩個來源都失敗：TWSE「${twseErr}」／TPEx「${tpexErr}」（詳細見上方紀錄）`;
+  } else {
+    $('tickerInput').value = all.join(',');
+    status.textContent = `✓ 已取得 ${all.length} 檔（上市${twseCodes.length} + 上櫃${tpexCodes.length}），已填入下方清單。`;
+  }
+  btn.disabled = false;
+}
+
+/* ============================================================
+   2. 資料抓取 (TWSE / TPEx)
+============================================================ */
+async function fetchTWSEMonth(code, ym){
+  const url = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${ym}01&stockNo=${code}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if(json.stat !== 'OK' || !json.data || !json.data.length) return null;
+  let name = null;
+  if(json.title){
+    const mt = json.title.match(/\d{4}年\d{1,2}月\s+(\S+)\s+(\S+)\s+各日成交資訊/);
+    if(mt) name = mt[2];
+  }
+  const rows = json.data.map(r=>{
+    const dateParts = r[0].split('/').map(Number);
+    const y = dateParts[0]+1911, m = dateParts[1], d = dateParts[2];
+    return {
+      sortKey: y*10000+m*100+d,
+      volume: parseNum(r[1]),
+      open: parseNum(r[3]),
+      high: parseNum(r[4]),
+      low: parseNum(r[5]),
+      close: parseNum(r[6])
+    };
+  }).filter(r=>r.close!=null);
+  return {rows, name};
+}
+
+async function fetchTPExMonth(code, roc){
+  const url = `https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_info/st43_result.php?l=zh-tw&d=${roc}&stkno=${code}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if(!json.aaData || !json.aaData.length) return null;
+  const rows = json.aaData.map(r=>{
+    const dateParts = r[0].split('/').map(Number);
+    const y = dateParts[0]+1911, m = dateParts[1], d = dateParts[2];
+    return {
+      sortKey: y*10000+m*100+d,
+      volume: parseNum(r[1])*1000, // 仟股 -> 股
+      open: parseNum(r[3]),
+      high: parseNum(r[4]),
+      low: parseNum(r[5]),
+      close: parseNum(r[6])
+    };
+  }).filter(r=>r.close!=null);
+  return {rows, name:null};
+}
+
+async function fetchStockHistory(code, monthsBack){
+  const months = recentMonths(monthsBack);
+  let source = null, name = null;
+  let all = [];
+  let lastErr = null;
+  // 先試 TWSE 本月，判斷上市/上櫃
+  try{
+    const first = await fetchTWSEMonth(code, months[0].ym);
+    if(first && first.rows.length){ source='twse'; name=first.name; all = all.concat(first.rows); }
+  }catch(e){ lastErr = `TWSE: ${e.message||e}`; }
+  if(!source){
+    try{
+      const first = await fetchTPExMonth(code, months[0].roc);
+      if(first && first.rows.length){ source='tpex'; all = all.concat(first.rows); }
+    }catch(e){ lastErr = (lastErr?lastErr+' / ':'') + `TPEx: ${e.message||e}`; }
+  }
+  if(!source) return {rows:[], error: lastErr || '兩個來源皆查無資料（可能代號不存在或已下市）'};
+
+  for(let i=1;i<months.length;i++){
+    await sleep(60);
+    try{
+      const m = source==='twse'
+        ? await fetchTWSEMonth(code, months[i].ym)
+        : await fetchTPExMonth(code, months[i].roc);
+      if(m && m.rows.length) all = all.concat(m.rows);
+    }catch(e){ lastErr = `${months[i].ym||months[i].roc}: ${e.message||e}`; }
+  }
+  // 去重、排序
+  const seen = new Set();
+  const merged = all.filter(r=>{
+    if(seen.has(r.sortKey)) return false;
+    seen.add(r.sortKey); return true;
+  }).sort((a,b)=>a.sortKey-b.sortKey);
+
+  return {code, name, source, rows: merged, error: merged.length<8 ? (lastErr||'資料筆數不足') : null};
+}
+
+/* ============================================================
+   3. 技術指標計算
+============================================================ */
+function sma(arr,n){
+  const out=[];
+  for(let i=0;i<arr.length;i++){
+    if(i<n-1){out.push(null);continue;}
+    let s=0; for(let j=i-n+1;j<=i;j++) s+=arr[j];
+    out.push(s/n);
+  }
+  return out;
+}
+function ema(arr,n){
+  const k=2/(n+1); let prev=null; const out=[];
+  for(let i=0;i<arr.length;i++){
+    if(arr[i]==null){out.push(null); continue;}
+    prev = prev==null ? arr[i] : (arr[i]*k + prev*(1-k));
+    out.push(prev);
+  }
+  return out;
+}
+function calcKD(closes,highs,lows,n){
+  let K=50,D=50; const Ks=[],Ds=[];
+  for(let i=0;i<closes.length;i++){
+    if(i<n-1){Ks.push(null);Ds.push(null);continue;}
+    const hh=Math.max(...highs.slice(i-n+1,i+1));
+    const ll=Math.min(...lows.slice(i-n+1,i+1));
+    const rsv = hh===ll ? 50 : (closes[i]-ll)/(hh-ll)*100;
+    K = K*2/3 + rsv*1/3;
+    D = D*2/3 + K*1/3;
+    Ks.push(K); Ds.push(D);
+  }
+  return {K:Ks,D:Ds};
+}
+function calcMACD(closes,s,l,sig){
+  const emaS=ema(closes,s), emaL=ema(closes,l);
+  const dif = closes.map((_,i)=> (emaS[i]!=null && emaL[i]!=null) ? emaS[i]-emaL[i] : null);
+  const firstValid = dif.findIndex(v=>v!=null);
+  const difForSig = dif.map((v,i)=> v==null ? (firstValid>=0?dif[firstValid]:0) : v);
+  const macd = ema(difForSig, sig).map((v,i)=> dif[i]==null ? null : v);
+  const dm = dif.map((v,i)=> (v!=null && macd[i]!=null) ? v-macd[i] : null);
+  return {dif,macd,dm};
+}
+
+function buildIndicators(stock, capitalMap){
+  const closes=stock.rows.map(r=>r.close);
+  const highs=stock.rows.map(r=>r.high);
+  const lows=stock.rows.map(r=>r.low);
+  const opens=stock.rows.map(r=>r.open);
+  const vols=stock.rows.map(r=>r.volume);
+
+  const kd5=calcKD(closes,highs,lows,5);
+  const kd3=calcKD(closes,highs,lows,3);
+  const macd5=calcMACD(closes,5,10,5);
+  const macd3=calcMACD(closes,3,6,3);
+  const ma5=sma(closes,5);
+  const ma20=sma(closes,20);
+  const bias20 = closes.map((c,i)=> (ma20[i]!=null && ma20[i]!==0) ? (c-ma20[i])/ma20[i]*100 : null);
+
+  const capital = capitalMap[stock.code];
+  const turnover = vols.map(v=> (v!=null && capital!=null && capital>0) ? (v/1000)/capital/100 : null);
+
+  return {
+    n: closes.length,
+    close: closes, open: opens, high: highs, low: lows, volume: vols,
+    K5: kd5.K, D5: kd5.D, K3: kd3.K, D3: kd3.D,
+    dif5: macd5.dif, macd5: macd5.macd, dm5: macd5.dm,
+    dif3: macd3.dif, macd3: macd3.macd, dm3: macd3.dm,
+    ma5, ma20, bias20, turnover,
+    hasCapital: capital!=null
+  };
+}
+
+/* 取得「N日前」的值；ago=0 為今日(最後一筆) */
+function v(arr, ago){
+  const idx = arr.length-1-ago;
+  if(idx<0) return null;
+  return arr[idx];
+}
+function eq(a,b){ if(a==null||b==null) return false; return Math.abs(a-b)<0.005; }
+function allValid(...vals){ return vals.every(x=>x!=null); }
+
+/* ============================================================
+   4. 規則定義
+============================================================ */
+const EPS = 0.005;
+
+function buildRules(turnoverFactor){
+  const TH = f => f*turnoverFactor;
+
+  // ---------- 六脈神劍 ----------
+  const swords = [
+    {id:'s1', name:'第一劍【翻多】', cond:'5K>5D 黃金交叉，且前一日5D剛轉折向上', fn:d=>{
+      const K0=v(d.K5,0),D0=v(d.D5,0),K1=v(d.K5,1),D1=v(d.D5,1),D2=v(d.D5,2);
+      if(!allValid(K0,D0,K1,D1,D2)) return false;
+      return K0>D0 && K1<D1 && D0>D1 && D1<D2;
+    }},
+    {id:'s2', name:'第二劍【翻空】', cond:'5K<5D 死亡交叉，且前一日5D剛轉折向下', fn:d=>{
+      const K0=v(d.K5,0),D0=v(d.D5,0),K1=v(d.K5,1),D1=v(d.D5,1),D2=v(d.D5,2);
+      if(!allValid(K0,D0,K1,D1,D2)) return false;
+      return K0<D0 && K1>D1 && D0<D1 && D1>D2;
+    }},
+    {id:'s3', name:'第三劍【轉強】', cond:'站上5日均價，且5日均價剛由跌轉升', fn:d=>{
+      const C0=v(d.close,0),M0=v(d.ma5,0),C1=v(d.close,1),M1=v(d.ma5,1),M2=v(d.ma5,2);
+      if(!allValid(C0,M0,C1,M1,M2)) return false;
+      return C0>M0 && C1<M1 && M0>M1 && M1<M2;
+    }},
+    {id:'s4', name:'第四劍【轉弱】', cond:'跌破5日均價，且5日均價剛由升轉跌', fn:d=>{
+      const C0=v(d.close,0),M0=v(d.ma5,0),C1=v(d.close,1),M1=v(d.ma5,1),M2=v(d.ma5,2);
+      if(!allValid(C0,M0,C1,M1,M2)) return false;
+      return C0<M0 && C1>M1 && M0<M1 && M1>M2;
+    }},
+    {id:'s5', name:'第五劍【收高】', cond:'以最高價收盤創高，且以最低價開盤高於前低', fn:d=>{
+      const C0=v(d.close,0),H0=v(d.high,0),C1=v(d.close,1),O0=v(d.open,0),L0=v(d.low,0),L1=v(d.low,1);
+      if(!allValid(C0,H0,C1,O0,L0,L1)) return false;
+      return eq(C0,H0) && C0>C1 && eq(O0,L0) && O0>L1;
+    }},
+    {id:'s6', name:'第六劍【收低】', cond:'以最低價收盤創低，且以最高價開盤低於前高', fn:d=>{
+      const C0=v(d.close,0),L0=v(d.low,0),C1=v(d.close,1),O0=v(d.open,0),H0=v(d.high,0),H1=v(d.high,1);
+      if(!allValid(C0,L0,C1,O0,H0,H1)) return false;
+      return eq(C0,L0) && C0<C1 && eq(O0,H0) && O0<H1;
+    }},
+  ];
+
+  // ---------- 求敗九劍 ----------
+  const bai = [
+    {id:'b1', name:'第1敗【翻空】', cond:'同第二劍 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      if(!swords[1].fn(d)) return false;
+      const t=v(d.turnover,0);
+      return !d.hasCapital || (t!=null && t>TH(0.1));
+    }},
+    {id:'b2', name:'第2敗【轉弱】', cond:'同第四劍 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      if(!swords[3].fn(d)) return false;
+      const t=v(d.turnover,0);
+      return !d.hasCapital || (t!=null && t>TH(0.1));
+    }},
+    {id:'b3', name:'第3敗【收低】', cond:'同第六劍 + 周轉率>'+TH(0.05).toFixed(3), fn:d=>{
+      if(!swords[5].fn(d)) return false;
+      const t=v(d.turnover,0);
+      return !d.hasCapital || (t!=null && t>TH(0.05));
+    }},
+    {id:'b4', name:'第4敗【5柱連跌】', cond:'5日D-M值連續2日下滑 + 周轉率>'+TH(0.05).toFixed(3), fn:d=>{
+      const a=v(d.dm5,0),b=v(d.dm5,1),c=v(d.dm5,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a<b && b<c && (!d.hasCapital || (t!=null && t>TH(0.05)));
+    }},
+    {id:'b5', name:'第5敗【3柱連跌】', cond:'3日D-M值連續2日下滑 + 周轉率>'+TH(0.05).toFixed(3), fn:d=>{
+      const a=v(d.dm3,0),b=v(d.dm3,1),c=v(d.dm3,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a<b && b<c && (!d.hasCapital || (t!=null && t>TH(0.05)));
+    }},
+    {id:'b6', name:'第6敗【5K連跌】', cond:'5日K值連續2日下滑 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const a=v(d.K5,0),b=v(d.K5,1),c=v(d.K5,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a<b && b<c && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'b7', name:'第7敗【3K連跌】', cond:'3日K值連續2日下滑 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const a=v(d.K3,0),b=v(d.K3,1),c=v(d.K3,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a<b && b<c && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'b8', name:'第8敗【DM死叉】', cond:'5日DIF下穿5日MACD + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const dif0=v(d.dif5,0),m0=v(d.macd5,0),dif1=v(d.dif5,1),m1=v(d.macd5,1),t=v(d.turnover,0);
+      if(!allValid(dif0,m0,dif1,m1)) return false;
+      return dif0<m0 && dif1>m1 && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'b9', name:'第9敗【跌破5日均價】', cond:'跌破5日均價且高低均創新低 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const C0=v(d.close,0),M0=v(d.ma5,0),C1=v(d.close,1),M1=v(d.ma5,1);
+      const H0=v(d.high,0),H1=v(d.high,1),L0=v(d.low,0),L1=v(d.low,1),t=v(d.turnover,0);
+      if(!allValid(C0,M0,C1,M1,H0,H1,L0,L1)) return false;
+      return C0<M0 && C1>M1 && H0<H1 && L0<L1 && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+  ];
+
+  // ---------- 十八漲（前12為條件式，13–18為排行榜） ----------
+  const zhang = [
+    {id:'z1', name:'第1漲【翻多】', cond:'同第一劍 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      if(!swords[0].fn(d)) return false;
+      const t=v(d.turnover,0); return !d.hasCapital || (t!=null && t>TH(0.1));
+    }},
+    {id:'z2', name:'第2漲【轉強】', cond:'同第三劍 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      if(!swords[2].fn(d)) return false;
+      const t=v(d.turnover,0); return !d.hasCapital || (t!=null && t>TH(0.1));
+    }},
+    {id:'z3', name:'第3漲【收高】', cond:'同第五劍 + 周轉率>'+TH(0.05).toFixed(3), fn:d=>{
+      if(!swords[4].fn(d)) return false;
+      const t=v(d.turnover,0); return !d.hasCapital || (t!=null && t>TH(0.05));
+    }},
+    {id:'z4', name:'第4漲【低指標】', cond:'5K<30、5D-M<0、月乖離<1、收盤>5、周轉率>'+TH(0.7).toFixed(3), fn:d=>{
+      const K0=v(d.K5,0),dm0=v(d.dm5,0),b0=v(d.bias20,0),C0=v(d.close,0),t=v(d.turnover,0);
+      if(!allValid(K0,dm0,b0,C0)) return false;
+      return K0<30 && dm0<0 && b0<1 && C0>5 && (!d.hasCapital || (t!=null && t>TH(0.7)));
+    }},
+    {id:'z5', name:'第5漲【3柱連漲】', cond:'3日D-M值連續2日上升 + 周轉率>'+TH(0.05).toFixed(3), fn:d=>{
+      const a=v(d.dm3,0),b=v(d.dm3,1),c=v(d.dm3,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a>b && b>c && (!d.hasCapital || (t!=null && t>TH(0.05)));
+    }},
+    {id:'z6', name:'第6漲【量增】', cond:'成交量微幅放大(0~20%) + 周轉率>'+TH(0.3).toFixed(3), fn:d=>{
+      const vol0=v(d.volume,0),vol1=v(d.volume,1),t=v(d.turnover,0);
+      if(!allValid(vol0,vol1)) return false;
+      return vol0>vol1 && vol0<vol1*1.2 && (!d.hasCapital || (t!=null && t>TH(0.3)));
+    }},
+    {id:'z7', name:'第7漲【3K連漲】', cond:'3日K值連續2日上升 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const a=v(d.K3,0),b=v(d.K3,1),c=v(d.K3,2),t=v(d.turnover,0);
+      if(!allValid(a,b,c)) return false;
+      return a>b && b>c && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'z8', name:'第8漲【DM金叉】', cond:'5日DIF上穿5日MACD + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const dif0=v(d.dif5,0),m0=v(d.macd5,0),dif1=v(d.dif5,1),m1=v(d.macd5,1),t=v(d.turnover,0);
+      if(!allValid(dif0,m0,dif1,m1)) return false;
+      return dif0>m0 && dif1<m1 && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'z9', name:'第9漲【站上5日均價】', cond:'站上5日均價且高低均創新高 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const C0=v(d.close,0),M0=v(d.ma5,0),C1=v(d.close,1),M1=v(d.ma5,1);
+      const H0=v(d.high,0),H1=v(d.high,1),L0=v(d.low,0),L1=v(d.low,1),t=v(d.turnover,0);
+      if(!allValid(C0,M0,C1,M1,H0,H1,L0,L1)) return false;
+      return C0>M0 && C1<M1 && H0>H1 && L0>L1 && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'z10', name:'第10漲【柱狀體翻多】', cond:'5日D-M值連續3日先跌後升 + 周轉率>'+TH(0.2).toFixed(3), fn:d=>{
+      const a=v(d.dm5,0),b=v(d.dm5,1),c=v(d.dm5,2),e=v(d.dm5,3),t=v(d.turnover,0);
+      if(!allValid(a,b,c,e)) return false;
+      return a>b && b<c && c<e && (!d.hasCapital || (t!=null && t>TH(0.2)));
+    }},
+    {id:'z11', name:'第11漲【收最高】', cond:'收盤=最高價≥昨高、月乖離<8 + 周轉率>'+TH(0.1).toFixed(3), fn:d=>{
+      const C0=v(d.close,0),H0=v(d.high,0),H1=v(d.high,1),b0=v(d.bias20,0),t=v(d.turnover,0);
+      if(!allValid(C0,H0,H1,b0)) return false;
+      return eq(C0,H0) && C0>=H1-EPS && b0<8 && (!d.hasCapital || (t!=null && t>TH(0.1)));
+    }},
+    {id:'z12', name:'第12漲【熱門股】', cond:'收盤>5、量比>1、月乖離<0 + 周轉率>'+TH(1).toFixed(3), fn:d=>{
+      const C0=v(d.close,0),vol0=v(d.volume,0),vol1=v(d.volume,1),b0=v(d.bias20,0),t=v(d.turnover,0);
+      if(!allValid(C0,vol0,vol1,b0)) return false;
+      return C0>5 && (vol0/vol1)>1 && b0<0 && (!d.hasCapital || (t!=null && t>TH(1)));
+    }},
+  ];
+
+  // 排行榜型（13–18漲）：sortDir 'asc' 表示取最小，回傳用於排序的數值
+  const ranking = [
+    {id:'z13', name:'第13漲【月線負乖離最大60檔】', cond:'20日乖離率最小（最負）的60檔', metric:d=>v(d.bias20,0), sortDir:'asc'},
+    {id:'z14', name:'第14漲【5日KD之K值最小60檔】', cond:'5日K值最小的60檔', metric:d=>v(d.K5,0), sortDir:'asc'},
+    {id:'z15', name:'第15漲【3日KD之K值最小60檔】', cond:'3日K值最小的60檔', metric:d=>v(d.K3,0), sortDir:'asc'},
+    {id:'z16', name:'第16漲【5日KD之D值最小60檔】', cond:'5日D值最小的60檔', metric:d=>v(d.D5,0), sortDir:'asc'},
+    {id:'z17', name:'第17漲【5日MACD最小60檔】', cond:'5日MACD(訊號線)最小的60檔', metric:d=>v(d.macd5,0), sortDir:'asc'},
+    {id:'z18', name:'第18漲【3日KD之D值最小60檔】', cond:'3日D值最小的60檔', metric:d=>v(d.D3,0), sortDir:'asc'},
+  ];
+
+  return {swords, bai, zhang, ranking};
+}
+
+/* ============================================================
+   5. 主流程
+============================================================ */
+let CANCELLED = false;
+let RESULTS_STORE = {};
+window.PROB_FILTER_MODE = 'all';
+window.PROB_VIEW_MODE = 'grouped'; // for CSV export
+
+async function runScreener(){
+  const codes = parseTickerList();
+  if(!codes.length){ alert('請輸入至少一個股票代號'); return; }
+
+  if(codes.length > 150){
+    const estMin = Math.ceil(codes.length * 4 / 6 / 60 * 1.3); // 約略估算：6併發、每請求約1秒
+    const ok = confirm(`您輸入了 ${codes.length} 檔股票，預估約需 ${estMin} 分鐘（視網路與API速度可能更久）。確定要繼續嗎？`);
+    if(!ok) return;
+  }
+
+  const capitalMap = parseCapitalMap();
+  const industryMap = parseIndustryMap();
+  const turnoverFactor = parseFloat($('turnoverFactor').value);
+
+  $('fetchBtn').disabled = true;
+  $('cancelBtn').disabled = false;
+  CANCELLED = false;
+  $('progressWrap').style.display = 'block';
+  $('logBox').style.display = 'block';
+  $('logBox').innerHTML = '';
+  log(`開始抓取 ${codes.length} 檔股票，近4個月歷史資料…（並行6檔同時處理）`);
+
+  const stocksData = [];
+  let done = 0;
+  const CONCURRENCY = 6;
+  let cursor = 0;
+
+  async function worker(){
+    while(cursor < codes.length){
+      if(CANCELLED) return;
+      const code = codes[cursor++];
+      try{
+        const hist = await fetchStockHistory(code, 4);
+        if(!hist || !hist.rows || hist.rows.length < 8){
+          log(`✗ ${code}：${(hist&&hist.error)||'查無資料或資料不足'}`, 'err');
+        } else {
+          const ind = buildIndicators({code, rows:hist.rows}, capitalMap);
+          stocksData.push({code, name:hist.name||code, source:hist.source, industry: normalizeIndustryName(industryMap[code]||'未分類'), ind});
+          log(`✓ ${code} ${hist.name||''}（${hist.source.toUpperCase()}，${hist.rows.length}筆，${ind.hasCapital?'有股本':'⚠️無股本'}）`, 'ok');
+        }
+      }catch(e){
+        log(`✗ ${code}：抓取失敗（${e.message||e}）`, 'err');
+      }
+      done++;
+      $('progressText').textContent = `處理中 ${done}/${codes.length}`;
+      $('progressFill').style.width = `${Math.round(done/codes.length*100)}%`;
+    }
+  }
+
+  const workers = Array.from({length: Math.min(CONCURRENCY, codes.length)}, ()=>worker());
+  await Promise.all(workers);
+
+  $('progressText').textContent = CANCELLED
+    ? `已取消：成功取得 ${stocksData.length}/${done} 檔資料`
+    : `完成：成功取得 ${stocksData.length}/${codes.length} 檔資料`;
+  $('fetchBtn').disabled = false;
+  $('cancelBtn').disabled = true;
+
+  screenAndRender(stocksData, turnoverFactor);
+}
+
+let ALL_STOCKS_DATA = [];
+let CURRENT_TURNOVER_FACTOR = 1;
+
+function screenAndRender(stocksData, turnoverFactor){
+  if(!stocksData.length){
+    log('沒有任何股票成功取得資料，請檢查代號或稍後再試。','err');
+    return;
+  }
+  ALL_STOCKS_DATA = stocksData;
+  CURRENT_TURNOVER_FACTOR = turnoverFactor;
+  buildIndustryFilterUI(stocksData);
+  doRenderAll(stocksData, turnoverFactor);
+}
+
+function buildIndustryFilterUI(stocksData){
+  const counts = new Map();
+  stocksData.forEach(s=>{
+    const ind = normalizeIndustryName(s.industry || '未分類');
+    counts.set(ind, (counts.get(ind)||0)+1);
+  });
+  const industries = Array.from(counts.keys()).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const panel = $('industryFilterPanel');
+  if(industries.length<=1){
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    return;
+  }
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <h2>產業別分類 <span class="tag">${industries.length} 個分類 / ${stocksData.length} 檔</span></h2>
+    <div class="industry-toolbar">
+      <input type="text" id="industrySearch" placeholder="搜尋產業，例如 半導體、金融、航運" style="max-width:340px;">
+      <button class="ghost" id="indSelAll">全選</button>
+      <button class="ghost" id="indSelNone">全不選</button>
+      <button class="primary" id="indApply">套用篩選</button>
+    </div>
+    <div class="hint" style="margin-bottom:10px;">勾選產業後按「套用篩選」會只重算該產業股票；若 CSV 來源只給產業代碼，系統會自動轉成「代碼 + 產業名稱」，例如 14 半導體業、25 金融保險業。</div>
+    <div id="indChecks" class="industry-grid"></div>
+  `;
+  const checksWrap = $('indChecks');
+  industries.forEach(ind=>{
+    const label = document.createElement('label');
+    label.className = 'industry-card';
+    label.dataset.industry = ind;
+    label.innerHTML = `<span><input type="checkbox" class="indchk" value="${ind}" checked> ${ind}</span><span class="cnt">${counts.get(ind)}檔</span>`;
+    checksWrap.appendChild(label);
+  });
+  $('industrySearch').oninput = (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    panel.querySelectorAll('.industry-card').forEach(card=>{
+      card.style.display = !q || card.dataset.industry.toLowerCase().includes(q) ? 'flex' : 'none';
+    });
+  };
+  $('indSelAll').onclick = ()=> panel.querySelectorAll('.indchk').forEach(c=>c.checked=true);
+  $('indSelNone').onclick = ()=> panel.querySelectorAll('.indchk').forEach(c=>c.checked=false);
+  $('indApply').onclick = ()=>{
+    const selected = new Set(Array.from(panel.querySelectorAll('.indchk')).filter(c=>c.checked).map(c=>c.value));
+    const filtered = ALL_STOCKS_DATA.filter(s=> selected.has(normalizeIndustryName(s.industry||'未分類')));
+    doRenderAll(filtered, CURRENT_TURNOVER_FACTOR);
+  };
+}
+
+function doRenderAll(stocksData, turnoverFactor){
+  const rules = buildRules(turnoverFactor);
+  renderSwordsGroup('tab-liumai', rules.swords, stocksData);
+  renderConditionGroup('tab-qiubai', rules.bai, stocksData, '📉 求敗九劍：全部規則皆屬<b>空方（轉弱/賣出）</b>訊號，用於找出可能轉弱、適合減碼或避開的標的。', '空方');
+  renderZhangGroup('tab-shibazhang', rules.zhang, rules.ranking, stocksData, '📈 十八漲：前12項條件屬<b>多方（轉強/買進）</b>訊號；後6項排行榜型則用於挑選相對超跌、指標偏低、可能醞釀反彈的標的。');
+  renderProbabilityTab('tab-probability', stocksData, rules);
+  renderPortfolioTab('tab-portfolio');
+  renderPortfolioTracking();
+}
+
+/* ============================================================
+   6b. CSV 上傳路徑（繞過瀏覽器CORS限制的可靠替代方案）
+============================================================ */
+function splitCSVLine(line){
+  const out = [];
+  let cur = '', inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(ch === ',' && !inQuotes){
+      out.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseCSVText(text){
+  text = String(text||'').replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  if(!lines.length) return new Map();
+  const header = splitCSVLine(lines[0]).map(h=>h.trim().replace(/^﻿/, '').toLowerCase());
+  const idx = {
+    code: header.indexOf('code'),
+    name: header.indexOf('name'),
+    market: header.indexOf('market'),
+    industry: header.indexOf('industry'),
+    capital: header.indexOf('capital'),
+    date: header.indexOf('date'),
+    open: header.indexOf('open'),
+    high: header.indexOf('high'),
+    low: header.indexOf('low'),
+    close: header.indexOf('close'),
+    volume: header.indexOf('volume'),
+  };
+  const required = ['code','date','open','high','low','close','volume'];
+  const missing = required.filter(k=>idx[k]===-1);
+  if(missing.length) throw new Error(`CSV缺少必要欄位：${missing.join(', ')}`);
+
+  const groups = new Map();
+  for(let i=1;i<lines.length;i++){
+    const cols = splitCSVLine(lines[i]);
+    const code = (cols[idx.code]||'').trim();
+    if(!code) continue;
+    const dateStr = (cols[idx.date]||'').trim();
+    const sortKey = parseInt(dateStr.replace(/-/g,''), 10);
+    const row = {
+      sortKey,
+      open: parseNum(cols[idx.open]),
+      high: parseNum(cols[idx.high]),
+      low: parseNum(cols[idx.low]),
+      close: parseNum(cols[idx.close]),
+      volume: parseNum(cols[idx.volume]),
+    };
+    if(row.close==null) continue;
+    if(!groups.has(code)){
+      const market = idx.market>=0 ? (cols[idx.market]||'').trim().toLowerCase() : 'twse';
+      const industry = idx.industry>=0 ? normalizeIndustryName((cols[idx.industry]||'').trim()) : null;
+      const capitalRaw = idx.capital>=0 ? (cols[idx.capital]||'').trim() : '';
+      const capital = capitalRaw ? parseNum(capitalRaw) : null;
+      groups.set(code, {name: idx.name>=0 ? (cols[idx.name]||'').trim() : code, market: market||'twse', industry, capital, rows:[]});
+    }
+    groups.get(code).rows.push(row);
+  }
+  groups.forEach(g=> g.rows.sort((a,b)=>a.sortKey-b.sortKey));
+  return groups;
+}
+
+let CSV_TEXT_CACHE = null;
+let CSV_FILE_NAME = '';
+
+async function readFileAsTextSafe(file){
+  if(!file) throw new Error('尚未選擇檔案');
+  if(file.text){
+    try{ return await file.text(); }catch(e){ /* fallback to FileReader below */ }
+  }
+  return await new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result||''));
+    reader.onerror = () => reject(reader.error || new Error('FileReader 讀取失敗'));
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+async function cacheSelectedCSV(){
+  const file = $('csvFileInput').files[0];
+  const status = $('csvStatus');
+  CSV_TEXT_CACHE = null;
+  CSV_FILE_NAME = '';
+  if(!file){ status.textContent = ''; return; }
+  status.textContent = `正在讀取 ${file.name} 到記憶體…`;
+  try{
+    const text = await readFileAsTextSafe(file);
+    if(!text || !text.trim()) throw new Error('檔案內容是空的');
+    CSV_TEXT_CACHE = text;
+    CSV_FILE_NAME = file.name;
+    status.textContent = `✓ 已讀入 ${file.name}（${text.length.toLocaleString()} 字元），可按「用CSV資料選股」。`;
+  }catch(e){
+    status.textContent = `⚠️ 檔案讀取失敗：${e.message||e}。請用記事本打開CSV，複製內容貼到「CSV文字備援貼上區」。`;
+  }
+}
+
+function analyzeCSVText(text, sourceLabel){
+  const status = $('csvStatus');
+  const groups = parseCSVText(text);
+  if(!groups.size){ status.textContent = '⚠️ CSV解析後沒有任何有效資料列。'; return; }
+  const capitalMap = parseCapitalMap();
+  const industryMap = parseIndustryMap();
+  let csvCapitalCount = 0;
+  groups.forEach((g, code)=>{
+    if(g.capital!=null && !isNaN(g.capital) && g.capital>0){
+      // CSV 內建股本優先補入，讓週轉率可離線計算；手動股本若已填，仍以手動值優先。
+      if(capitalMap[code]==null) capitalMap[code] = g.capital;
+      csvCapitalCount++;
+    }
+  });
+  const turnoverFactor = parseFloat($('turnoverFactor').value);
+  const stocksData = [];
+  let hasCapitalCount = 0;
+  groups.forEach((g, code)=>{
+    if(g.rows.length<8) return;
+    const ind = buildIndicators({code, rows:g.rows}, capitalMap);
+    if(ind.hasCapital) hasCapitalCount++;
+    stocksData.push({code, name:g.name||code, source:g.market||'twse', industry: normalizeIndustryName(g.industry || industryMap[code] || '未分類'), ind});
+  });
+  status.textContent = `✓ ${sourceLabel}：共解析 ${groups.size} 檔代號，其中 ${stocksData.length} 檔資料筆數足夠（≥8筆）並完成計算；CSV含股本 ${csvCapitalCount} 檔，實際可算週轉率 ${hasCapitalCount} 檔。`;
+  screenAndRender(stocksData, turnoverFactor);
+}
+
+async function runFromCSV(){
+  const status = $('csvStatus');
+  const pasted = ($('csvPasteInput') && $('csvPasteInput').value || '').trim();
+  status.textContent = '正在解析CSV…';
+  try{
+    if(pasted){
+      analyzeCSVText(pasted, '貼上區CSV');
+      return;
+    }
+    if(CSV_TEXT_CACHE){
+      analyzeCSVText(CSV_TEXT_CACHE, CSV_FILE_NAME || '已快取CSV');
+      return;
+    }
+    const file = $('csvFileInput').files[0];
+    if(!file){ status.textContent = '請先選擇CSV檔案，或把CSV內容貼到備援文字框。'; return; }
+    const text = await readFileAsTextSafe(file);
+    CSV_TEXT_CACHE = text;
+    CSV_FILE_NAME = file.name;
+    analyzeCSVText(text, file.name);
+  }catch(e){
+    status.textContent = `⚠️ 解析失敗：${e.message||e}。若是權限問題，請改用「CSV文字備援貼上區」。`;
+  }
+}
+
+/* ============================================================
+   6. 渲染
+============================================================ */
+function fmt(n, digits){
+  if(n==null || isNaN(n)) return '—';
+  return n.toFixed(digits==null?2:digits);
+}
+
+function stockSiteUrls(code, source){
+  const yahooSuffix = source==='tpex' ? '.TWO' : '.TW';
+  const tvMarket = source==='tpex' ? 'TPEX' : 'TWSE';
+  return {
+    yahoo: `https://tw.stock.yahoo.com/quote/${code}${yahooSuffix}`,
+    goodinfo: `https://goodinfo.tw/tw/StockDetail.asp?STOCK_ID=${code}`,
+    cmoney: `https://www.cmoney.tw/forum/stock/${code}`,
+    fugle: `https://www.fugle.tw/ai/${code}`,
+    tradingview: `https://www.tradingview.com/symbols/${tvMarket}-${code}/`
+  };
+}
+function yahooUrl(code, source){ return stockSiteUrls(code, source).yahoo; }
+function selectedExternalUrl(code, source){
+  const site = $('externalSiteSelect') ? $('externalSiteSelect').value : 'yahoo';
+  return stockSiteUrls(code, source)[site] || stockSiteUrls(code, source).yahoo;
+}
+function stockLinksHTML(code, source){
+  const urls = stockSiteUrls(code, source);
+  return `<div class="stock-links">
+    <a class="code-link" href="${urls.yahoo}" target="_blank" rel="noopener" title="在Yahoo奇摩股市開啟 ${code}">${code}</a>
+    <span class="mini-links">
+      <a href="${urls.goodinfo}" target="_blank" rel="noopener">Goodinfo</a>
+      <a href="${urls.cmoney}" target="_blank" rel="noopener">CMoney</a>
+      <a href="${urls.fugle}" target="_blank" rel="noopener">Fugle</a>
+      <a href="${urls.tradingview}" target="_blank" rel="noopener">TV</a>
+    </span>
+  </div>`;
+}
+
+
+function escapeHTML(v){ return String(v==null?'':v).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function addStockToPortfolio(code, buyPrice, amount, qty, note){
+  const current=parsePortfolioInput ? parsePortfolioInput() : [];
+  const idx=current.findIndex(x=>x.code===code);
+  const item={code:String(code).trim(), buyPrice:parseNum(buyPrice), qty:parseNum(qty), amount:parseNum(amount), note:note||'從選股結果加入追蹤'};
+  if(idx>=0){
+    current[idx]={...current[idx], ...Object.fromEntries(Object.entries(item).filter(([k,v])=>v!==null && v!==''))};
+    if(!item.note) current[idx].note=current[idx].note||'從選股結果加入追蹤';
+  }else current.push(item);
+  $('portfolioInput').value=formatPortfolioInput(current);
+  savePortfolio();
+  alert(`${code} 已加入 / 更新持股追蹤`);
+}
+function clearRowFilter(scope){
+  const root = scope || document;
+  root.querySelectorAll('tr[data-code]').forEach(tr=>tr.style.display='');
+  root.querySelectorAll('.quick-filter-panel').forEach(p=>p.classList.remove('active'));
+}
+function filterRowsByCodes(codes, scope, title){
+  const set=new Set(codes);
+  const root=scope || activeTabPanel() || document;
+  root.querySelectorAll('tr[data-code]').forEach(tr=>{ tr.style.display=set.has(tr.dataset.code)?'':'none'; });
+  const panel=root.querySelector('.quick-filter-panel');
+  if(panel){ panel.classList.add('active'); panel.innerHTML=`目前篩選：<b>${escapeHTML(title||'自訂條件')}</b>，顯示 ${set.size} 檔。 <button class="ghost" style="padding:3px 8px; font-size:11px;" onclick="clearRowFilter(activeTabPanel())">清除</button>`; }
+}
+function filterActiveChecked(){
+  const panel=activeTabPanel();
+  const checked=getActiveChecks().filter(c=>c.checked).map(c=>c.value);
+  if(!checked.length){ alert('目前分頁沒有勾選股票'); return; }
+  filterRowsByCodes(checked, panel, '已勾選股票');
+}
+
+function rowHTML(s){
+  const d=s.ind;
+  const C0=v(d.close,0), C1=v(d.close,1);
+  const chg = (C0!=null&&C1!=null) ? C0-C1 : null;
+  const chgCls = chg==null?'':(chg>0?'up':(chg<0?'down':''));
+  const t0=v(d.turnover,0);
+  const url = yahooUrl(s.code, s.source);
+  return `<tr data-code="${s.code}" data-source="${s.source||'twse'}">
+    <td><input type="checkbox" class="rowchk" value="${s.code}" data-source="${s.source||'twse'}" data-url="${url}"></td>
+    <td>${stockLinksHTML(s.code, s.source)}</td>
+    <td>${s.name}</td>
+    <td>${s.industry||'未分類'}</td>
+    <td>${fmt(C0)}</td>
+    <td class="${chgCls}">${chg==null?'—':(chg>0?'+':'')+fmt(chg)}</td>
+    <td>${t0==null?(d.hasCapital?'—':'⚠️無股本'):fmt(t0,3)}</td>
+    <td>${fmt(v(d.K5,0),1)}</td>
+    <td>${fmt(v(d.D5,0),1)}</td>
+    <td><button class="track-btn" onclick="addStockToPortfolio('${s.code}', ${C0==null?'null':C0}, null, null, '${(s.name||'').replace(/'/g,"\'")}')">追蹤</button></td>
+  </tr>`;
+}
+
+function tableShell(rowsHTML){
+  if(!rowsHTML.length) return `<div class="empty-row">本條件目前無符合股票。</div>`;
+  return `<table>
+    <thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>收盤</th><th>漲跌</th><th>周轉率</th><th>5K</th><th>5D</th><th>追蹤</th></tr></thead>
+    <tbody>${rowsHTML.join('')}</tbody>
+  </table>`;
+}
+
+function wireBlockControls(block){
+  block.querySelectorAll('button[data-act]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const act = btn.dataset.act;
+      const checks = block.querySelectorAll('.rowchk');
+      if(act==='selall'){ checks.forEach(c=>c.checked=true); }
+      if(act==='selnone'){ checks.forEach(c=>c.checked=false); }
+      if(act==='filterrule'){
+        const codes = Array.from(checks).map(c=>c.value);
+        filterRowsByCodes(codes, block, btn.dataset.title || '本條件');
+      }
+      if(act==='collapse'){
+        const body=block.querySelector('.rulebody');
+        if(body){ body.classList.toggle('collapsed'); btn.textContent = body.classList.contains('collapsed') ? '展開' : '收合'; }
+      }
+      if(act==='openselected'){
+        const urls = Array.from(checks).filter(c=>c.checked).map(c=>selectedExternalUrl(c.value, c.dataset.source));
+        if(!urls.length){ alert('請先勾選股票'); return; }
+        openUrls(urls);
+      }
+    });
+  });
+}
+
+function blockControlsHTML(ruleTitle){
+  return `<div class="blockctrl">
+    <button class="ghost collapse-btn" data-act="collapse">收合</button>
+    <button class="ghost" data-act="filterrule" data-title="${escapeHTML(ruleTitle||'本條件')}">篩選本條件</button>
+    <button class="ghost" data-act="selall">全選</button>
+    <button class="ghost" data-act="selnone">全不選</button>
+    <button class="ghost" data-act="openselected">開啟所選外部資料</button>
+  </div>`;
+}
+
+function directionChipHTML(direction){
+  if(direction==='多方') return '<span class="dirchip bull">多方</span>';
+  if(direction==='空方') return '<span class="dirchip bear">空方</span>';
+  if(direction==='參考') return '<span class="dirchip ref">參考</span>';
+  return '';
+}
+function inferDirection(rule){
+  return /翻空|轉弱|收低|死叉|連跌|跌破/.test(rule.name) ? '空方' : '多方';
+}
+
+function renderConditionGroup(containerId, ruleList, stocksData, bannerHTML, defaultDirection){
+  const container = $(containerId);
+  container.innerHTML = bannerHTML ? `<div class="hint" style="font-size:13px; margin-bottom:14px;">${bannerHTML}</div>` : '';
+  RESULTS_STORE[containerId] = {};
+  ruleList.forEach(rule=>{
+    const matched = stocksData.filter(s=>{
+      try{ return rule.fn(s.ind); }catch(e){ return false; }
+    });
+    RESULTS_STORE[containerId][rule.id] = matched;
+    const isNeg = /翻空|轉弱|收低|死叉|連跌/.test(rule.name);
+    const block = document.createElement('div');
+    block.className = 'ruleblock';
+    block.innerHTML = `
+      <div class="rulehead">
+        <span class="seal ${isNeg?'neg':''}">${rule.name.match(/第\S+/)[0]}</span>
+        <div>
+          <div class="ruletitle">${rule.name} ${directionChipHTML(defaultDirection || inferDirection(rule))}</div>
+          <div class="rulecond">${rule.cond}</div>
+        </div>
+        <span class="rulecount">${matched.length} 檔</span>
+      </div>
+      ${matched.length ? blockControlsHTML(rule.name) : ''}
+      <div class="quick-filter-panel"></div><div class="rulebody">${tableShell(matched.map(rowHTML))}</div>
+    `;
+    container.appendChild(block);
+    wireBlockControls(block);
+  });
+  appendExportButton(container, containerId);
+}
+
+function renderRuleBlock(container, rule, stocksData, isNeg){
+  const matched = stocksData.filter(s=>{
+    try{ return rule.fn(s.ind); }catch(e){ return false; }
+  });
+  const block = document.createElement('div');
+  block.className = 'ruleblock';
+  block.innerHTML = `
+    <div class="rulehead">
+      <span class="seal ${isNeg?'neg':''}">${rule.name.match(/第\S+/)[0]}</span>
+      <div>
+        <div class="ruletitle">${rule.name} ${directionChipHTML(isNeg?'空方':'多方')}</div>
+        <div class="rulecond">${rule.cond}</div>
+      </div>
+      <span class="rulecount">${matched.length} 檔</span>
+    </div>
+    ${matched.length ? blockControlsHTML(rule.name) : ''}
+    <div class="quick-filter-panel"></div><div class="rulebody">${tableShell(matched.map(rowHTML))}</div>
+  `;
+  container.appendChild(block);
+  wireBlockControls(block);
+  return matched;
+}
+
+function renderSwordsGroup(containerId, ruleList, stocksData){
+  const container = $(containerId);
+  container.innerHTML = '';
+  RESULTS_STORE[containerId] = {};
+
+  const bullRules = ruleList.filter(r=>/翻多|轉強|收高/.test(r.name));
+  const bearRules = ruleList.filter(r=>/翻空|轉弱|收低/.test(r.name));
+
+  const bullHeader = document.createElement('div');
+  bullHeader.innerHTML = `<div style="margin:4px 0 12px; font-size:13px; font-weight:700; color:var(--red);">📈 多方（看漲）規則</div>`;
+  container.appendChild(bullHeader);
+  bullRules.forEach(rule=>{
+    RESULTS_STORE[containerId][rule.id] = renderRuleBlock(container, rule, stocksData, false);
+  });
+
+  const bearHeader = document.createElement('div');
+  bearHeader.innerHTML = `<div style="margin:22px 0 12px; font-size:13px; font-weight:700; color:var(--green);">📉 空方（看跌）規則</div>`;
+  container.appendChild(bearHeader);
+  bearRules.forEach(rule=>{
+    RESULTS_STORE[containerId][rule.id] = renderRuleBlock(container, rule, stocksData, true);
+  });
+
+  appendExportButton(container, containerId);
+}
+
+function renderZhangGroup(containerId, condRules, rankRules, stocksData){
+  const container = $(containerId);
+  container.innerHTML = '';
+  RESULTS_STORE[containerId] = {};
+
+  condRules.forEach(rule=>{
+    const matched = stocksData.filter(s=>{
+      try{ return rule.fn(s.ind); }catch(e){ return false; }
+    });
+    RESULTS_STORE[containerId][rule.id] = matched;
+    const block = document.createElement('div');
+    block.className = 'ruleblock';
+    block.innerHTML = `
+      <div class="rulehead">
+        <span class="seal">${rule.name.match(/第\S+/)[0]}</span>
+        <div>
+          <div class="ruletitle">${rule.name} ${directionChipHTML('多方')}</div>
+          <div class="rulecond">${rule.cond}</div>
+        </div>
+        <span class="rulecount">${matched.length} 檔</span>
+      </div>
+      ${matched.length ? blockControlsHTML(rule.name) : ''}
+      <div class="quick-filter-panel"></div><div class="rulebody">${tableShell(matched.map(rowHTML))}</div>
+    `;
+    container.appendChild(block);
+    wireBlockControls(block);
+  });
+
+  const rankHeader = document.createElement('div');
+  rankHeader.innerHTML = `<div style="margin:20px 0 8px; font-size:12px; color:var(--muted); font-family:var(--mono);">— 以下 6 項為排行榜型規則：取股票池中指定指標最小的固定 60 檔（若股票池不足60檔則取全部）—</div>`;
+  container.appendChild(rankHeader);
+
+  rankRules.forEach(rule=>{
+    const valid = stocksData
+      .map(s=>({s, val: rule.metric(s.ind)}))
+      .filter(x=>x.val!=null);
+    valid.sort((a,b)=> rule.sortDir==='asc' ? a.val-b.val : b.val-a.val);
+    const top = valid.slice(0,60).map(x=>x.s);
+    RESULTS_STORE[containerId][rule.id] = top;
+    const block = document.createElement('div');
+    block.className = 'ruleblock';
+    block.innerHTML = `
+      <div class="rulehead">
+        <span class="seal">${rule.name.match(/第\S+/)[0]}</span>
+        <div>
+          <div class="ruletitle">${rule.name} ${directionChipHTML('參考')}</div>
+          <div class="rulecond">${rule.cond}</div>
+        </div>
+        <span class="rulecount">${top.length} 檔</span>
+      </div>
+      ${top.length ? blockControlsHTML(rule.name) : ''}
+      <div class="quick-filter-panel"></div><div class="rulebody">${tableShell(top.map(rowHTML))}</div>
+    `;
+    container.appendChild(block);
+    wireBlockControls(block);
+  });
+
+  appendExportButton(container, containerId);
+}
+
+
+function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+function ruleHit(rule, stock){ try{ return !!rule.fn(stock.ind); }catch(e){ return false; } }
+function evaluateStockSignals(stock, rules){
+  const bullRules=[], bearRules=[], refRules=[];
+  rules.swords.forEach(r=>{
+    if(ruleHit(r, stock)) (/翻多|轉強|收高/.test(r.name) ? bullRules : bearRules).push(r.name);
+  });
+  rules.bai.forEach(r=>{ if(ruleHit(r, stock)) bearRules.push(r.name); });
+  rules.zhang.forEach(r=>{ if(ruleHit(r, stock)) bullRules.push(r.name); });
+  const stockRanks = new Set();
+  rules.ranking.forEach(r=>{
+    const val = r.metric(stock.ind);
+    if(val!=null) refRules.push(r.name);
+  });
+  const today = bullRules.concat(bearRules).filter(n=>/翻多|翻空|轉強|轉弱|收高|收低|金叉|死叉|站上|跌破/.test(n)).length;
+  const bull = bullRules.length, bear = bearRules.length;
+  const total = bull + bear;
+  const raw = total ? (bull/(total))*100 : 50;
+  const longProb = clamp(Math.round(raw + (bull-bear)*4 + today*1.5), 5, 95);
+  const shortProb = 100 - longProb;
+  const score = bull*2 - bear*2 + today*1.5;
+  let label='中性觀察', cls='watch';
+  if(longProb>=70 && bear===0){ label='強多'; cls='buy'; }
+  else if(longProb>=60){ label='偏多'; cls='buy'; }
+  else if(shortProb>=70 && bull===0){ label='強空'; cls='sell'; }
+  else if(shortProb>=60){ label='偏空'; cls='sell'; }
+  else if(bull>=2 && bear>=2){ label='多空打架'; cls='watch'; }
+  return {bull,bear,today,score,longProb,shortProb,label,cls,bullRules,bearRules,refRules};
+}
+function probBarHTML(p, side){ return `<div class="probbar ${side==='bear'?'bear':''}"><div style="width:${clamp(p,0,100)}%"></div></div>`; }
+function renderProbabilityTab(containerId, stocksData, rules, filterMode, viewMode){
+  const container=$(containerId);
+  if(!container) return;
+  filterMode = filterMode || 'all';
+  viewMode = viewMode || window.PROB_VIEW_MODE || 'grouped';
+  window.PROB_FILTER_MODE = filterMode;
+  window.PROB_VIEW_MODE = viewMode;
+  let rows = stocksData.map(s=>({s, sig:evaluateStockSignals(s,rules)}));
+  const allRows = rows.slice();
+  const counts = probabilityCounts(allRows);
+  rows = filterProbabilityRows(rows, filterMode);
+  rows.sort((a,b)=> b.sig.score-a.sig.score || b.sig.longProb-a.sig.longProb);
+  const card = (mode, label, value, cls, sub)=>`
+      <div class="metric-card clickable ${filterMode===mode?'active':''}" onclick="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), '${mode}', window.PROB_VIEW_MODE)">
+        <div class="label">${label}</div><div class="value ${cls||''}">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}
+      </div>`;
+  container.innerHTML = `
+    <div class="hint" style="font-size:13px; margin-bottom:12px;">多空勝率是依目前技術規則命中數推估的「規則勝率/方向機率」，不是歷史回測保證勝率；適合用來排序與追蹤風險。上方卡片可直接點擊篩選，下方可切換「分類呈現 / 清單呈現」。</div>
+    <div class="metric-grid">
+      ${card('all','分析股票數',stocksData.length,'','全部分析股票')}
+      ${card('bull','偏多以上',counts.bull,'score-bull','強多 + 偏多')}
+      ${card('bear','偏空以上',counts.bear,'score-bear','強空 + 偏空')}
+      ${card('fight','多空打架',counts.fight,'score-warn','多空同時命中')}
+    </div>
+    <div class="metric-grid" style="margin-top:10px; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+      ${card('strongBull','強多',counts.strongBull,'score-bull','多方機率 ≥70')}
+      ${card('biasBull','偏多',counts.biasBull,'score-bull','多方機率 ≥60')}
+      ${card('neutral','中性觀察',counts.neutral,'score-warn','方向未明確')}
+      ${card('biasBear','偏空',counts.biasBear,'score-bear','空方機率 ≥60')}
+      ${card('strongBear','強空',counts.strongBear,'score-bear','空方機率 ≥70')}
+    </div>
+    <div class="blockctrl" style="align-items:center; margin-top:12px;">
+      <button class="ghost" onclick="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), 'all', window.PROB_VIEW_MODE)">全部</button>
+      <button class="ghost" onclick="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), 'bull', window.PROB_VIEW_MODE)">只看偏多以上</button>
+      <button class="ghost" onclick="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), 'bear', window.PROB_VIEW_MODE)">只看偏空以上</button>
+      <button class="ghost" onclick="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), 'fight', window.PROB_VIEW_MODE)">只看多空打架</button>
+      <select class="prob-mode-select" onchange="renderProbabilityTab('tab-probability', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR), window.PROB_FILTER_MODE||'all', this.value)">
+        <option value="grouped" ${viewMode==='grouped'?'selected':''}>分類呈現</option>
+        <option value="flat" ${viewMode==='flat'?'selected':''}>清單呈現</option>
+      </select>
+      <button class="ghost" onclick="exportProbabilityCSV()">匯出多空勝率 CSV</button>
+    </div>
+    ${viewMode==='grouped' ? probabilityGroupedHTML(rows, filterMode) : probabilityTableHTML(rows)}
+  `;
+}
+function probabilityCounts(rows){
+  return {
+    bull: rows.filter(x=>x.sig.longProb>=60).length,
+    bear: rows.filter(x=>x.sig.shortProb>=60).length,
+    fight: rows.filter(x=>x.sig.bull>=2 && x.sig.bear>=2).length,
+    strongBull: rows.filter(x=>x.sig.label==='強多').length,
+    biasBull: rows.filter(x=>x.sig.label==='偏多').length,
+    neutral: rows.filter(x=>x.sig.label==='中性觀察').length,
+    biasBear: rows.filter(x=>x.sig.label==='偏空').length,
+    strongBear: rows.filter(x=>x.sig.label==='強空').length
+  };
+}
+function filterProbabilityRows(rows, filterMode){
+  if(filterMode==='bull') return rows.filter(x=>x.sig.longProb>=60);
+  if(filterMode==='bear') return rows.filter(x=>x.sig.shortProb>=60);
+  if(filterMode==='fight') return rows.filter(x=>x.sig.bull>=2 && x.sig.bear>=2);
+  if(filterMode==='strongBull') return rows.filter(x=>x.sig.label==='強多');
+  if(filterMode==='biasBull') return rows.filter(x=>x.sig.label==='偏多');
+  if(filterMode==='neutral') return rows.filter(x=>x.sig.label==='中性觀察');
+  if(filterMode==='biasBear') return rows.filter(x=>x.sig.label==='偏空');
+  if(filterMode==='strongBear') return rows.filter(x=>x.sig.label==='強空');
+  return rows;
+}
+function probabilityGroupedHTML(rows, filterMode){
+  if(!rows.length) return `<div class="empty-row">尚無資料，請先完成選股分析，或切換其他篩選分類。</div>`;
+  const order = ['強多','偏多','多空打架','中性觀察','偏空','強空'];
+  const icon = {'強多':'🔥','偏多':'📈','多空打架':'⚠️','中性觀察':'👀','偏空':'📉','強空':'🧊'};
+  const desc = {
+    '強多':'多方規則明顯勝出，適合優先觀察追蹤。',
+    '偏多':'多方機率較高，但仍需留意空方訊號。',
+    '多空打架':'多方與空方訊號同時出現，建議避免盲目追價。',
+    '中性觀察':'目前方向不明確，可等待下一次訊號。',
+    '偏空':'空方機率較高，持股需提高警覺。',
+    '強空':'空方規則明顯勝出，適合列入減碼/賣出觀察。'
+  };
+  return order.map(label=>{
+    let group = rows.filter(x=> label==='多空打架' ? (x.sig.bull>=2 && x.sig.bear>=2) : x.sig.label===label);
+    if(filterMode!=='all' && !group.length) return '';
+    group.sort((a,b)=> b.sig.score-a.sig.score || b.sig.longProb-a.sig.longProb);
+    const body = group.length ? probabilityTableHTML(group) : `<div class="empty-row">此分類目前無股票。</div>`;
+    return `<div class="prob-section ${group.length?'':'empty'}">
+      <div class="prob-section-head">
+        <div class="prob-section-title">${icon[label]||''} ${label}</div>
+        <div class="hint" style="margin:0;">${desc[label]||''}</div>
+        <span class="prob-section-count">${group.length} 檔</span>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+}
+function probabilityTableHTML(rows){
+  if(!rows.length) return `<div class="empty-row">尚無資料，請先完成選股分析。</div>`;
+  return `<table><thead><tr><th>代號</th><th>名稱</th><th>產業</th><th>方向</th><th>共振分</th><th>多方</th><th>空方</th><th>多方機率</th><th>空方機率</th><th>觸發規則</th><th>追蹤</th></tr></thead><tbody>`+
+    rows.map(x=>{
+      const s=x.s, sig=x.sig;
+      const cls=sig.cls==='buy'?'buy':(sig.cls==='sell'?'sell':'watch');
+      const rulesText=[...sig.bullRules.map(n=>'多:'+n), ...sig.bearRules.map(n=>'空:'+n)].slice(0,5).join(' / ');
+      return `<tr data-code="${s.code}"><td>${stockLinksHTML(s.code,s.source)}</td><td>${s.name}</td><td>${s.industry||'未分類'}</td><td><span class="status-pill ${cls}">${sig.label}</span></td><td>${fmt(sig.score,1)}</td><td class="up">${sig.bull}</td><td class="down">${sig.bear}</td><td>${sig.longProb}% ${probBarHTML(sig.longProb,'bull')}</td><td>${sig.shortProb}% ${probBarHTML(sig.shortProb,'bear')}</td><td style="text-align:left; max-width:360px; white-space:normal;">${rulesText||'—'}</td><td><button class="track-btn" onclick="addStockToPortfolio('${s.code}', ${v(s.ind.close,0)==null?'null':v(s.ind.close,0)}, null, null, '${(s.name||'').replace(/'/g,"\'")}')">追蹤</button></td></tr>`;
+    }).join('')+`</tbody></table>`;
+}
+function exportProbabilityCSV(){
+  if(!ALL_STOCKS_DATA.length){ alert('尚無資料'); return; }
+  const rules=buildRules(CURRENT_TURNOVER_FACTOR);
+  const lines=['code,name,industry,score,bull_count,bear_count,long_probability,short_probability,label,bull_rules,bear_rules'];
+  ALL_STOCKS_DATA.forEach(s=>{
+    const sig=evaluateStockSignals(s,rules);
+    lines.push([s.code,s.name,s.industry||'未分類',fmt(sig.score,1),sig.bull,sig.bear,sig.longProb,sig.shortProb,sig.label,`"${sig.bullRules.join('|')}"`,`"${sig.bearRules.join('|')}"`].join(','));
+  });
+  downloadText(lines.join('\n'), '多空勝率.csv');
+}
+function downloadText(text, filename){
+  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+}
+function renderPortfolioTab(containerId){
+  const container=$(containerId);
+  if(!container) return;
+  container.innerHTML = `<div class="hint" style="font-size:13px; margin-bottom:12px;">此分頁同步顯示上方「已買進股票追蹤」結果。可在上方輸入持股，或從任一規則表勾選後匯入。</div><div id="portfolioResultInTab"></div>`;
+}
+function parsePortfolioInput(){
+  return $('portfolioInput').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(line=>{
+    const parts=line.split(',').map(x=>x.trim());
+    // 新格式：code,buyPrice,qty,amount,note
+    // 舊格式相容：code,buyPrice,qty,note
+    let amount = null, note = '';
+    if(parts.length >= 5){
+      amount = parseNum(parts[3]);
+      note = parts.slice(4).join(',');
+    }else{
+      note = parts.slice(3).join(',');
+    }
+    return {code:parts[0], buyPrice:parseNum(parts[1]), qty:parseNum(parts[2]), amount, note};
+  }).filter(x=>/^\d{4}$/.test(x.code));
+}
+function formatPortfolioInput(items){
+  return items.map(x=>[x.code, x.buyPrice??'', x.qty??'', x.amount??'', x.note??''].join(',')).join('\n');
+}
+function clearQuickBuy(){
+  ['quickBuyCode','quickBuyPrice','quickBuyAmount','quickBuyQty','quickBuyNote'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+}
+function quickAddPortfolio(){
+  const code = ($('quickBuyCode')?.value || '').trim();
+  if(!/^\d{4}$/.test(code)){ alert('請輸入 4 位數股票代號'); return; }
+  const buyPrice = parseNum($('quickBuyPrice')?.value);
+  const amount = parseNum($('quickBuyAmount')?.value);
+  let qty = parseNum($('quickBuyQty')?.value);
+  const note = ($('quickBuyNote')?.value || '').trim() || '手動加入追蹤';
+  if(qty==null && amount!=null && buyPrice!=null && buyPrice>0) qty = amount / buyPrice;
+  addStockToPortfolio(code, buyPrice, amount, qty, note);
+  const tab = document.querySelector('.tab[data-tab="portfolio"]');
+  if(tab) tab.click();
+}
+function savePortfolio(){
+  localStorage.setItem('twScreenerPortfolio', $('portfolioInput').value);
+  renderPortfolioTracking();
+}
+function loadPortfolio(){
+  const saved=localStorage.getItem('twScreenerPortfolio');
+  if(saved!=null) $('portfolioInput').value=saved;
+}
+function portfolioSuggestion(sig, retPct){
+  const sellTh=parseFloat($('sellProbThreshold').value||70);
+  const stopTh=parseFloat($('stopLossThreshold').value||-8);
+  if(retPct!=null && retPct<=stopTh && sig.shortProb>=55) return ['停損/贖回', 'sell', `跌幅${fmt(retPct,1)}%，且空方機率${sig.shortProb}%`];
+  if(sig.shortProb>=sellTh && sig.bull<=1) return ['賣出/贖回', 'sell', `空方機率達${sig.shortProb}%，多方支撐不足`];
+  if(sig.shortProb>=60) return ['減碼觀察', 'watch', `空方機率${sig.shortProb}%，建議降低部位或設停利停損`];
+  if(sig.longProb>=65 && sig.bear===0) return ['續抱', 'buy', `多方機率${sig.longProb}%，目前無明顯空方規則`];
+  if(sig.longProb>=55) return ['續抱觀察', 'watch', `多方略佔優，留意後續是否轉弱`];
+  return ['觀察', 'watch', '多空訊號不明，等待下一個明確觸發'];
+}
+function renderPortfolioTracking(){
+  const out1=$('portfolioResult'), out2=$('portfolioResultInTab');
+  const renderTo = html=>{ if(out1) out1.innerHTML=html; if(out2) out2.innerHTML=html; };
+  const items=parsePortfolioInput();
+  if(!items.length){ renderTo('<div class="empty-row">尚未輸入持股清單。</div>'); return; }
+  if(!ALL_STOCKS_DATA.length){ renderTo('<div class="empty-row">請先上傳CSV或開始選股，完成行情與指標計算後才能追蹤持股。</div>'); return; }
+  const rules=buildRules(CURRENT_TURNOVER_FACTOR);
+  const byCode=new Map(ALL_STOCKS_DATA.map(s=>[s.code,s]));
+  const rows=items.map(it=>{
+    const s=byCode.get(it.code);
+    if(!s) return `<tr><td>${it.code}</td><td colspan="14" style="text-align:left;">此代號不在目前分析資料中，請把它加入股票池或上傳包含此代號的CSV。</td></tr>`;
+    const sig=evaluateStockSignals(s,rules);
+    const close=v(s.ind.close,0);
+    const qty = it.qty!=null ? it.qty : ((it.amount!=null && it.buyPrice!=null && it.buyPrice>0) ? it.amount/it.buyPrice : null);
+    const cost = it.amount!=null ? it.amount : ((it.buyPrice!=null && qty!=null) ? it.buyPrice*qty : null);
+    const marketValue = (close!=null && qty!=null) ? close*qty : null;
+    const profit = (marketValue!=null && cost!=null) ? marketValue-cost : null;
+    const ret=(cost!=null && marketValue!=null && cost>0) ? profit/cost*100 : ((it.buyPrice!=null && close!=null) ? (close-it.buyPrice)/it.buyPrice*100 : null);
+    const [suggest, cls, reason]=portfolioSuggestion(sig, ret);
+    return `<tr><td>${stockLinksHTML(s.code,s.source)}</td><td>${s.name}</td><td>${s.industry||'未分類'}</td><td>${it.buyPrice==null?'—':fmt(it.buyPrice,2)}</td><td>${qty==null?'—':fmt(qty,0)}</td><td class="money-cell">${cost==null?'—':fmt(cost,0)}</td><td>${fmt(close,2)}</td><td class="money-cell">${marketValue==null?'—':fmt(marketValue,0)}</td><td class="${profit==null?'':(profit>=0?'up':'down')}">${profit==null?'—':fmt(profit,0)}</td><td class="${ret==null?'':(ret>=0?'up':'down')}">${ret==null?'—':fmt(ret,1)+'%'}</td><td>${sig.longProb}% ${probBarHTML(sig.longProb,'bull')}</td><td>${sig.shortProb}% ${probBarHTML(sig.shortProb,'bear')}</td><td><span class="status-pill ${cls}">${suggest}</span></td><td style="text-align:left; white-space:normal;">${reason}</td><td style="text-align:left;">${it.note||''}</td></tr>`;
+  }).join('');
+  renderTo(`<div class="blockctrl"><button class="ghost" onclick="exportPortfolioCSV()">匯出持股追蹤 CSV</button></div><table><thead><tr><th>代號</th><th>名稱</th><th>產業</th><th>買進價</th><th>股數</th><th>購買金額</th><th>現價</th><th>目前市值</th><th>損益金額</th><th>損益%</th><th>多方機率</th><th>空方機率</th><th>提示</th><th>原因</th><th>備註</th></tr></thead><tbody>${rows}</tbody></table>`);
+}
+function exportPortfolioCSV(){
+  if(!ALL_STOCKS_DATA.length){ alert('尚無分析資料'); return; }
+  const rules=buildRules(CURRENT_TURNOVER_FACTOR), byCode=new Map(ALL_STOCKS_DATA.map(s=>[s.code,s]));
+  const lines=['code,name,industry,buy_price,qty,cost,close,market_value,profit,return_pct,long_probability,short_probability,suggestion,reason,note'];
+  parsePortfolioInput().forEach(it=>{
+    const s=byCode.get(it.code); if(!s) return;
+    const sig=evaluateStockSignals(s,rules); const close=v(s.ind.close,0);
+    const qty = it.qty!=null ? it.qty : ((it.amount!=null && it.buyPrice!=null && it.buyPrice>0) ? it.amount/it.buyPrice : null);
+    const cost = it.amount!=null ? it.amount : ((it.buyPrice!=null && qty!=null) ? it.buyPrice*qty : null);
+    const marketValue = (close!=null && qty!=null) ? close*qty : null;
+    const profit = (marketValue!=null && cost!=null) ? marketValue-cost : null;
+    const ret=(cost!=null && marketValue!=null && cost>0) ? profit/cost*100 : ((it.buyPrice!=null && close!=null) ? (close-it.buyPrice)/it.buyPrice*100 : null);
+    const [suggest, cls, reason]=portfolioSuggestion(sig, ret);
+    lines.push([s.code,s.name,s.industry||'未分類',it.buyPrice??'',qty==null?'':fmt(qty,0),cost==null?'':fmt(cost,0),fmt(close,2),marketValue==null?'':fmt(marketValue,0),profit==null?'':fmt(profit,0),ret==null?'':fmt(ret,2),sig.longProb,sig.shortProb,suggest,`"${reason}"`,`"${it.note||''}"`].join(','));
+  });
+  downloadText(lines.join('\n'), '持股追蹤.csv');
+}
+function importSelectedToPortfolio(){
+  const selected=getActiveChecks().filter(c=>c.checked).map(c=>c.value);
+  if(!selected.length){ alert('請先在目前分頁勾選股票'); return; }
+  const current=parsePortfolioInput();
+  const seen=new Set(current.map(x=>x.code));
+  selected.forEach(code=>{ if(!seen.has(code)) current.push({code,buyPrice:null,qty:null,amount:null,note:'從選股結果匯入'}); });
+  $('portfolioInput').value=formatPortfolioInput(current);
+  savePortfolio();
+}
+
+function appendExportButton(container, containerId){
+  const btn = document.createElement('button');
+  btn.className = 'ghost';
+  btn.style.marginTop = '10px';
+  btn.textContent = '匯出本分類結果為 CSV';
+  btn.onclick = ()=> exportCSV(containerId);
+  container.appendChild(btn);
+}
+
+function exportCSV(containerId){
+  const data = RESULTS_STORE[containerId];
+  if(!data) return;
+  let lines = ['規則,代號,名稱,收盤,周轉率,5K,5D'];
+  Object.entries(data).forEach(([ruleId, stocks])=>{
+    stocks.forEach(s=>{
+      const d=s.ind;
+      lines.push([ruleId, s.code, s.name, fmt(v(d.close,0)), fmt(v(d.turnover,0),3), fmt(v(d.K5,0),1), fmt(v(d.D5,0),1)].join(','));
+    });
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${containerId}_選股結果.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function activeTabPanel(){ return document.querySelector('.tabpanel.active'); }
+function getActiveChecks(){
+  const panel = activeTabPanel();
+  return panel ? Array.from(panel.querySelectorAll('.rowchk')) : [];
+}
+function openUrls(urls){
+  if(!urls.length){ alert('請先勾選股票'); return; }
+  if(urls.length>8 && !confirm(`即將開啟 ${urls.length} 個新分頁，瀏覽器可能會擋住部分彈出視窗（請允許此網站的彈出視窗），確定繼續嗎？`)) return;
+  urls.forEach((u,i)=> setTimeout(()=>window.open(u,'_blank'), i*150));
+}
+
+/* ============================================================
+   7. 事件綁定
+============================================================ */
+$('turnoverFactor').addEventListener('input', e=>{
+  $('turnoverFactorLabel').textContent = parseFloat(e.target.value).toFixed(2)+'×';
+});
+$('csvFileInput').addEventListener('change', cacheSelectedCSV);
+$('csvRunBtn').addEventListener('click', runFromCSV);
+$('csvClearBtn').addEventListener('click', ()=>{
+  CSV_TEXT_CACHE = null;
+  CSV_FILE_NAME = '';
+  if($('csvPasteInput')) $('csvPasteInput').value = '';
+  if($('csvFileInput')) $('csvFileInput').value = '';
+  if($('csvStatus')) $('csvStatus').textContent = '已清除CSV快取與貼上內容。';
+});
+$('globalSelAll').addEventListener('click', ()=> getActiveChecks().forEach(c=>c.checked=true));
+$('globalSelNone').addEventListener('click', ()=> getActiveChecks().forEach(c=>c.checked=false));
+$('globalOpenSelected').addEventListener('click', ()=>{
+  const urls = getActiveChecks().filter(c=>c.checked).map(c=>selectedExternalUrl(c.value, c.dataset.source));
+  openUrls(urls);
+});
+$('globalShowChecked').addEventListener('click', filterActiveChecked);
+$('globalClearRowFilter').addEventListener('click', ()=>clearRowFilter(activeTabPanel()));
+
+$('sellProbThreshold').addEventListener('input', e=>{ $('sellProbLabel').textContent=e.target.value+'%'; renderPortfolioTracking(); });
+$('stopLossThreshold').addEventListener('input', e=>{ $('stopLossLabel').textContent=e.target.value+'%'; renderPortfolioTracking(); });
+$('quickAddPortfolioBtn').addEventListener('click', quickAddPortfolio);
+$('clearQuickBuyBtn').addEventListener('click', clearQuickBuy);
+$('savePortfolioBtn').addEventListener('click', savePortfolio);
+$('trackPortfolioBtn').addEventListener('click', renderPortfolioTracking);
+$('importSelectedPortfolioBtn').addEventListener('click', importSelectedToPortfolio);
+$('clearPortfolioBtn').addEventListener('click', ()=>{ if(confirm('確定清空持股清單？')){ $('portfolioInput').value=''; savePortfolio(); } });
+loadPortfolio();
+renderPortfolioTracking();
+$('fetchAllMarketBtn').addEventListener('click', fetchAllMarketList);
+$('fetchBtn').addEventListener('click', runScreener);
+$('cancelBtn').addEventListener('click', ()=>{ CANCELLED = true; });
+$('logToggle').addEventListener('click', ()=>{
+  const box = $('logBox');
+  box.style.display = box.style.display==='block' ? 'none' : 'block';
+});
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    $('tab-'+tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
