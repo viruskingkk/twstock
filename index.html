@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>六脈神劍 · 十絕陣 · 藏鋒榜 ｜ 台股選股終端</title>
+<title>六脈神劍 · 十絕陣 · 藏鋒榜 · 天機閣 ｜ 台股選股終端</title>
 <style>
   :root{
     --bg:#14161b;
@@ -162,6 +162,19 @@
   .fine-filter-card{background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px; margin:10px 0 14px;}
   .fine-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px;}
   .fine-field label{font-size:11px; color:var(--muted); margin-bottom:4px;}
+
+  .detail-panel{background:#0f1014; border:1px solid var(--border); border-radius:10px; padding:12px; margin:8px 0;}
+  .detail-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:10px 0;}
+  .level-card{background:var(--panel2); border:1px solid var(--border); border-radius:9px; padding:10px 12px;}
+  .level-card .k{font-size:11px; color:var(--muted);} .level-card .v{font-family:var(--mono); font-size:18px; font-weight:800; margin-top:2px;}
+  .spark-candle{width:100%; min-width:260px; height:130px; display:block; background:#11131a; border:1px solid var(--border); border-radius:8px;}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:10px 0;}
+  .mini-btn{padding:4px 9px; font-size:11px; border-color:var(--border); background:transparent;}
+  .news-box textarea{min-height:90px;}
+  .check-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; margin:10px 0;}
+  .check-item{border:1px solid var(--border); background:var(--panel2); border-radius:8px; padding:7px 9px; font-size:12px;}
+  .backtest-summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:10px 0 14px;}
+
   .fine-field input,.fine-field select{width:100%; background:#0f1014; border:1px solid var(--border); color:var(--text); border-radius:7px; padding:8px 10px; font-family:var(--mono);}
   .fine-checks{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
   .fine-checks label{display:inline-flex; align-items:center; gap:6px; background:#0f1014; border:1px solid var(--border); border-radius:999px; padding:6px 10px; color:var(--text); margin:0;}
@@ -189,6 +202,10 @@
   footer{margin-top:30px; color:var(--muted); font-size:11.5px; border-top:1px solid var(--border); padding-top:14px;}
   a{color:var(--amber); text-decoration:none;}
   a:hover{text-decoration:underline;}
+
+  .decision-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--muted);}
+  .score-bull{color:var(--red)!important;} .score-bear{color:var(--green)!important;} .score-warn{color:var(--amber)!important;}
+
 </style>
 </head>
 <body>
@@ -328,21 +345,31 @@
 
   <!-- ===== Tabs ===== -->
   <div class="tabs">
-    <div class="tab active" data-tab="liumai">六脈神劍 <span style="color:var(--muted)">(6)</span></div>
+    <div class="tab active" data-tab="tianji">天機閣</div>
+    <div class="tab" data-tab="liumai">六脈神劍 <span style="color:var(--muted)">(6)</span></div>
     <div class="tab" data-tab="qiubai">求敗九劍 <span style="color:var(--muted)">(9)</span></div>
     <div class="tab" data-tab="shibazhang">十八漲 <span style="color:var(--muted)">(18)</span></div>
     <div class="tab" data-tab="tenjue">十絕陣 <span style="color:var(--muted)">(10)</span></div>
     <div class="tab" data-tab="probability">多空勝率</div>
     <div class="tab" data-tab="hiddenblade">藏鋒榜</div>
+    <div class="tab" data-tab="levels">攻守價位</div>
+    <div class="tab" data-tab="intersection">選股交集</div>
+    <div class="tab" data-tab="backtest">回測簡報</div>
+    <div class="tab" data-tab="news">消息面</div>
     <div class="tab" data-tab="portfolio">持股追蹤</div>
   </div>
 
-  <div class="tabpanel active" id="tab-liumai"></div>
+  <div class="tabpanel active" id="tab-tianji"></div>
+  <div class="tabpanel" id="tab-liumai"></div>
   <div class="tabpanel" id="tab-qiubai"></div>
   <div class="tabpanel" id="tab-shibazhang"></div>
   <div class="tabpanel" id="tab-tenjue"></div>
   <div class="tabpanel" id="tab-probability"></div>
   <div class="tabpanel" id="tab-hiddenblade"></div>
+  <div class="tabpanel" id="tab-levels"></div>
+  <div class="tabpanel" id="tab-intersection"></div>
+  <div class="tabpanel" id="tab-backtest"></div>
+  <div class="tabpanel" id="tab-news"></div>
   <div class="tabpanel" id="tab-portfolio"></div>
 
   <footer>
@@ -1026,12 +1053,17 @@ function buildIndustryFilterUI(stocksData){
 
 function doRenderAll(stocksData, turnoverFactor){
   const rules = buildRules(turnoverFactor);
+  renderTianjiTab('tab-tianji', stocksData, rules);
   renderSwordsGroup('tab-liumai', rules.swords, stocksData);
   renderConditionGroup('tab-qiubai', rules.bai, stocksData, '📉 求敗九劍：全部規則皆屬<b>空方（轉弱/賣出）</b>訊號，用於找出可能轉弱、適合減碼或避開的標的。', '空方');
   renderZhangGroup('tab-shibazhang', rules.zhang, rules.ranking, stocksData, '📈 十八漲：前12項條件屬<b>多方（轉強/買進）</b>訊號；後6項排行榜型則用於挑選相對超跌、指標偏低、可能醞釀反彈的標的。');
   renderTenJueGroup('tab-tenjue', rules.tenjue, stocksData);
   renderProbabilityTab('tab-probability', stocksData, rules);
   renderHiddenBladeTab('tab-hiddenblade', stocksData, rules);
+  renderLevelsTab('tab-levels', stocksData, rules);
+  renderIntersectionTab('tab-intersection', stocksData, rules);
+  renderBacktestTab('tab-backtest', stocksData, rules);
+  renderNewsTab('tab-news', stocksData, rules);
   renderPortfolioTab('tab-portfolio');
   renderPortfolioTracking();
 }
@@ -1280,6 +1312,7 @@ function rowHTML(s){
     <td>${t0==null?(d.hasCapital?'—':'⚠️無股本'):fmt(t0,3)}</td>
     <td>${fmt(v(d.K5,0),1)}</td>
     <td>${fmt(v(d.D5,0),1)}</td>
+    <td><button type="button" class="mini-btn" onclick="toggleKlineDetail(this, '${s.code}')">詳情</button></td>
     <td><button type="button" class="track-btn" onclick="addStockToPortfolio('${s.code}', ${C0==null?'null':C0}, null, null, '${(s.name||'').replace(/'/g,"\'")}')">追蹤</button></td>
   </tr>`;
 }
@@ -1287,7 +1320,7 @@ function rowHTML(s){
 function tableShell(rowsHTML){
   if(!rowsHTML.length) return `<div class="empty-row">本條件目前無符合股票。</div>`;
   return `<table>
-    <thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>收盤</th><th>漲跌</th><th>周轉率</th><th>5K</th><th>5D</th><th>追蹤</th></tr></thead>
+    <thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>收盤</th><th>漲跌</th><th>周轉率</th><th>5K</th><th>5D</th><th>詳情</th><th>追蹤</th></tr></thead>
     <tbody>${rowsHTML.join('')}</tbody>
   </table>`;
 }
@@ -1855,6 +1888,12 @@ function parsePortfolioInput(){
     return {code:parts[0], buyPrice:parseNum(parts[1]), qty:parseNum(parts[2]), amount, note};
   }).filter(x=>/^\d{4}$/.test(x.code));
 }
+
+// 相容天機閣：舊版天機閣呼叫 parsePortfolio()，實際持股解析函式為 parsePortfolioInput()。
+function parsePortfolio(){
+  return (typeof parsePortfolioInput === 'function') ? parsePortfolioInput() : [];
+}
+
 function formatPortfolioInput(items){
   return items.map(x=>[x.code, x.buyPrice??'', x.qty??'', x.amount??'', x.note??''].join(',')).join('\n');
 }
@@ -2000,6 +2039,11 @@ document.addEventListener('click', function(e){
   if(!href || href === '#' || href.startsWith('file:')){
     e.preventDefault();
     console.warn('已阻擋本機 file/空連結：', href);
+    return;
+  }
+  if(/^https?:\/\//i.test(href)){
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener');
   }
 }, true);
 
@@ -2261,6 +2305,358 @@ document.querySelectorAll('.tab').forEach(tab=>{
     });
     downloadText(lines.join('\n'), '藏鋒榜_多空雙榜.csv');
   };
+
+
+
+/* ============================================================
+   9. 進階功能：攻守價位 / K線詳情 / 選股交集 / 回測簡報 / 消息面
+============================================================ */
+function pct(a,b){ return (a!=null && b!=null && b!==0) ? (a-b)/b*100 : null; }
+function lastN(arr,n){ return arr.slice(Math.max(0, arr.length-n)); }
+function finiteVals(arr){ return arr.filter(x=>x!=null && isFinite(x)); }
+function getStockByCode(code){ return (ALL_STOCKS_DATA||[]).find(s=>String(s.code)===String(code)); }
+function calcSupportResistance(stock){
+  const d=stock.ind, C=v(d.close,0), atr=v(d.atr14,0), atrPct=v(d.atrPct,0);
+  const highs=finiteVals(lastN(d.high,20)), lows=finiteVals(lastN(d.low,20));
+  const resistance=highs.length?Math.max(...highs):null;
+  const support=lows.length?Math.min(...lows):null;
+  const longStop = C!=null && atr!=null ? Math.max(support==null?-Infinity:support*0.995, C-atr*1.5) : support;
+  const longTake = C!=null && atr!=null ? Math.max(resistance==null?-Infinity:resistance, C+atr*2.2) : resistance;
+  const shortStop = C!=null && atr!=null ? Math.min(resistance==null?Infinity:resistance*1.005, C+atr*1.5) : resistance;
+  const shortTake = C!=null && atr!=null ? Math.min(support==null?Infinity:support, C-atr*2.2) : support;
+  return {price:C, atr, atrPct, support, resistance, longStop, longTake, shortStop, shortTake};
+}
+function candleSVG(stock, n){
+  const d=stock.ind; n=n||36;
+  const len=d.close.length, start=Math.max(0,len-n);
+  const rows=[];
+  for(let i=start;i<len;i++) rows.push({o:d.open[i],h:d.high[i],l:d.low[i],c:d.close[i]});
+  if(!rows.length) return '<div class="empty-row">沒有K線資料</div>';
+  const vals=finiteVals(rows.flatMap(r=>[r.h,r.l]));
+  if(!vals.length) return '<div class="empty-row">沒有K線資料</div>';
+  const min=Math.min(...vals), max=Math.max(...vals), pad=(max-min)*0.08 || max*0.01 || 1;
+  const lo=min-pad, hi=max+pad, W=560, H=150, L=34, R=10, T=10, B=24, plotW=W-L-R, plotH=H-T-B;
+  const sx=i=>L+(rows.length===1?plotW/2:i*plotW/(rows.length-1));
+  const sy=v=>T+(hi-v)/(hi-lo)*plotH;
+  const bw=Math.max(3, Math.min(10, plotW/rows.length*0.55));
+  let parts=[];
+  parts.push(`<svg class="spark-candle" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`);
+  parts.push(`<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="#2a2e38"/><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#2a2e38"/>`);
+  [lo,(lo+hi)/2,hi].forEach(val=>{ const y=sy(val); parts.push(`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#20242c"/><text x="2" y="${y+4}" fill="#8b8f9b" font-size="10">${fmt(val,2)}</text>`); });
+  rows.forEach((r,i)=>{
+    if(!allValid(r.o,r.h,r.l,r.c)) return;
+    const x=sx(i), color=r.c>=r.o?'#e0483e':'#2f9e74';
+    const yH=sy(r.h), yL=sy(r.l), yO=sy(r.o), yC=sy(r.c);
+    parts.push(`<line x1="${x}" y1="${yH}" x2="${x}" y2="${yL}" stroke="${color}" stroke-width="1.2"/>`);
+    const y=Math.min(yO,yC), h=Math.max(2, Math.abs(yC-yO));
+    parts.push(`<rect x="${x-bw/2}" y="${y}" width="${bw}" height="${h}" fill="${color}" opacity="0.9"/>`);
+  });
+  parts.push(`</svg>`);
+  return parts.join('');
+}
+function stockDetailHTML(stock){
+  const lv=calcSupportResistance(stock), sig=evaluateStockSignals(stock, buildRules(CURRENT_TURNOVER_FACTOR||1));
+  const news=stockSiteUrls(stock.code, stock.source);
+  const q=encodeURIComponent(`${stock.code} ${stock.name} 股票 新聞`);
+  return `<div class="detail-panel">
+    <div class="rulehead"><div><div class="ruletitle">${stock.code} ${escapeHTML(stock.name)}｜詳情</div><div class="rulecond">支撐 / 壓力 / 止損 / 止盈以 ATR14 與近20根高低區推估，僅作技術風控參考。</div></div><span class="status-pill ${sig.cls}">${sig.label}</span></div>
+    <div class="detail-grid">
+      <div class="level-card"><div class="k">現價</div><div class="v">${fmt(lv.price,2)}</div></div>
+      <div class="level-card"><div class="k">支撐</div><div class="v score-bear">${fmt(lv.support,2)}</div></div>
+      <div class="level-card"><div class="k">壓力</div><div class="v score-bull">${fmt(lv.resistance,2)}</div></div>
+      <div class="level-card"><div class="k">ATR%</div><div class="v score-warn">${fmt(lv.atrPct,2)}%</div></div>
+      <div class="level-card"><div class="k">多方止損</div><div class="v score-bear">${fmt(lv.longStop,2)}</div></div>
+      <div class="level-card"><div class="k">多方止盈</div><div class="v score-bull">${fmt(lv.longTake,2)}</div></div>
+      <div class="level-card"><div class="k">空方止損</div><div class="v score-bull">${fmt(lv.shortStop,2)}</div></div>
+      <div class="level-card"><div class="k">空方止盈</div><div class="v score-bear">${fmt(lv.shortTake,2)}</div></div>
+    </div>
+    ${candleSVG(stock,36)}
+    <div class="btnrow"><a href="https://www.google.com/search?q=${q}&tbm=nws" target="_blank" rel="noopener">Google新聞</a><a href="${news.yahoo}" target="_blank" rel="noopener">Yahoo</a><a href="${news.goodinfo}" target="_blank" rel="noopener">Goodinfo</a><button type="button" class="track-btn" onclick="addStockToPortfolio('${stock.code}', ${lv.price==null?'null':lv.price}, null, null, '從詳情加入')">追蹤</button></div>
+  </div>`;
+}
+function toggleKlineDetail(btn, code){
+  const stock=getStockByCode(code); if(!stock){ alert('找不到此股票資料'); return; }
+  const tr=btn.closest('tr'); if(!tr) return;
+  const next=tr.nextElementSibling;
+  if(next && next.classList.contains('detail-row')){ next.remove(); return; }
+  const col=tr.children.length || 10;
+  const row=document.createElement('tr'); row.className='detail-row'; row.innerHTML=`<td colspan="${col}">${stockDetailHTML(stock)}</td>`;
+  tr.parentNode.insertBefore(row, tr.nextSibling);
+}
+function renderLevelsTab(containerId, stocksData, rules){
+  const c=$(containerId); if(!c) return;
+  if(!stocksData || !stocksData.length){ c.innerHTML='<div class="empty-row">尚無資料，請先匯入CSV或完成分析。</div>'; return; }
+  const q=(window.LEVEL_QUERY||'').trim();
+  const list=(q?stocksData.filter(s=>s.code.includes(q)||String(s.name).includes(q)):stocksData).slice(0,200);
+  c.innerHTML=`<div class="panel"><h2>攻守價位 <span class="tag">支撐 / 壓力 / 止損 / 止盈</span></h2><div class="btnrow"><input type="text" style="max-width:260px" placeholder="輸入代號或名稱" value="${escapeHTML(q)}" oninput="window.LEVEL_QUERY=this.value; renderLevelsTab('tab-levels', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))"><button type="button" class="ghost" onclick="window.LEVEL_QUERY=''; renderLevelsTab('tab-levels', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))">清除</button></div><div class="hint">支撐/壓力取近20根高低區；止損/止盈用 ATR14 倍數估算。建議配合多空勝率與藏鋒榜一起看。</div></div>`+
+  `<table><thead><tr><th>代號</th><th>名稱</th><th>現價</th><th>支撐</th><th>壓力</th><th>多方止損</th><th>多方止盈</th><th>空方止損</th><th>空方止盈</th><th>ATR%</th><th>詳情</th></tr></thead><tbody>`+
+  list.map(s=>{ const lv=calcSupportResistance(s); return `<tr data-code="${s.code}"><td>${stockLinksHTML(s.code,s.source)}</td><td>${escapeHTML(s.name)}</td><td>${fmt(lv.price,2)}</td><td class="score-bear">${fmt(lv.support,2)}</td><td class="score-bull">${fmt(lv.resistance,2)}</td><td>${fmt(lv.longStop,2)}</td><td>${fmt(lv.longTake,2)}</td><td>${fmt(lv.shortStop,2)}</td><td>${fmt(lv.shortTake,2)}</td><td>${fmt(lv.atrPct,2)}%</td><td><button type="button" class="mini-btn" onclick="toggleKlineDetail(this,'${s.code}')">展開K線</button></td></tr>`; }).join('')+`</tbody></table>`;
+}
+function allRuleSpecs(rules){
+  const out=[];
+  rules.swords.forEach(r=>out.push({...r, group:'六脈神劍', dir:/翻多|轉強|收高/.test(r.name)?'bull':'bear'}));
+  rules.bai.forEach(r=>out.push({...r, group:'求敗九劍', dir:'bear'}));
+  rules.zhang.forEach(r=>out.push({...r, group:'十八漲', dir:'bull'}));
+  rules.tenjue.forEach(r=>out.push({...r, group:'十絕陣', dir:r.dir}));
+  return out;
+}
+function renderIntersectionTab(containerId, stocksData, rules){
+  const c=$(containerId); if(!c) return;
+  if(!stocksData || !stocksData.length){ c.innerHTML='<div class="empty-row">尚無資料，請先分析。</div>'; return; }
+  const specs=allRuleSpecs(rules);
+  if(!window.INTERSECTION_SELECTED) window.INTERSECTION_SELECTED=['z1','z3'];
+  const anyTenBull=!!window.INTERSECTION_ANY_TEN_BULL;
+  const selected=new Set(window.INTERSECTION_SELECTED);
+  function hit(s, r){ try{return !!r.fn(s.ind)}catch(e){return false} }
+  let rows=stocksData.map(s=>{
+    const hitNames=specs.filter(r=>hit(s,r)).map(r=>r.name);
+    const requiredOk=[...selected].every(id=>{ const r=specs.find(x=>x.id===id); return r?hit(s,r):true; });
+    const tenBullOk=!anyTenBull || rules.tenjue.some(r=>r.dir==='bull' && hit(s,r));
+    return {s, hitNames, ok:requiredOk && tenBullOk};
+  }).filter(x=>x.ok).sort((a,b)=>b.hitNames.length-a.hitNames.length);
+  const checks=specs.map(r=>`<label class="check-item"><input type="checkbox" value="${r.id}" ${selected.has(r.id)?'checked':''} onchange="syncIntersectionChecks()"> <b>${r.id}</b> ${escapeHTML(r.name)} <span class="dirchip ${r.dir==='bear'?'bear':'bull'}">${r.dir==='bear'?'空':'多'}</span></label>`).join('');
+  c.innerHTML=`<div class="panel"><h2>選股交集 <span class="tag">同時命中多個規則</span></h2><div class="btnrow"><button type="button" class="primary" onclick="intersectionPreset('z1z3ten')">套用：第1漲 + 第3漲 + 任一十絕多方</button><button type="button" class="ghost" onclick="intersectionPreset('clear')">清空</button><label class="filter-chip"><input type="checkbox" id="anyTenBull" ${anyTenBull?'checked':''} onchange="window.INTERSECTION_ANY_TEN_BULL=this.checked; renderIntersectionTab('tab-intersection', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))"> 任一十絕陣多方</label></div><div class="check-grid">${checks}</div><div class="hint">目前符合：${rows.length} 檔。交集條件越多，結果越精準。</div></div>`+
+  (rows.length?`<table><thead><tr><th>代號</th><th>名稱</th><th>產業</th><th>命中數</th><th>命中規則</th><th>詳情</th><th>追蹤</th></tr></thead><tbody>${rows.map(x=>{const price=v(x.s.ind.close,0); return `<tr data-code="${x.s.code}"><td>${stockLinksHTML(x.s.code,x.s.source)}</td><td>${escapeHTML(x.s.name)}</td><td>${x.s.industry||'未分類'}</td><td>${x.hitNames.length}</td><td style="text-align:left; white-space:normal; max-width:560px;">${x.hitNames.slice(0,10).map(escapeHTML).join(' / ')}</td><td><button type="button" class="mini-btn" onclick="toggleKlineDetail(this,'${x.s.code}')">詳情</button></td><td><button type="button" class="track-btn" onclick="addStockToPortfolio('${x.s.code}', ${price==null?'null':price}, null, null, '從交集加入')">追蹤</button></td></tr>`}).join('')}</tbody></table>`:'<div class="empty-row">目前沒有符合交集條件的股票。</div>');
+}
+function syncIntersectionChecks(){
+  window.INTERSECTION_SELECTED=Array.from(document.querySelectorAll('#tab-intersection input[type="checkbox"][value]')).filter(x=>x.checked).map(x=>x.value);
+  renderIntersectionTab('tab-intersection', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR));
+}
+function intersectionPreset(name){
+  if(name==='z1z3ten'){ window.INTERSECTION_SELECTED=['z1','z3']; window.INTERSECTION_ANY_TEN_BULL=true; }
+  if(name==='clear'){ window.INTERSECTION_SELECTED=[]; window.INTERSECTION_ANY_TEN_BULL=false; }
+  renderIntersectionTab('tab-intersection', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR));
+}
+function shiftedInd(ind, endIdx){
+  const out={};
+  Object.keys(ind).forEach(k=>{ out[k]=Array.isArray(ind[k]) ? ind[k].slice(0,endIdx+1) : ind[k]; });
+  out.n=endIdx+1; return out;
+}
+function backtestRule(rule, stocksData, days, horizon){
+  const rows=[]; let wins=0, sum=0, n=0;
+  stocksData.forEach(s=>{
+    const d=s.ind, len=d.close.length;
+    const start=Math.max(25, len-days-horizon);
+    for(let i=start;i<len-horizon;i++){
+      const ind=shiftedInd(d,i); let ok=false;
+      try{ ok=!!rule.fn(ind); }catch(e){ ok=false; }
+      const c0=d.close[i], c1=d.close[i+horizon];
+      if(ok && allValid(c0,c1) && c0!==0){ const r=(c1-c0)/c0*100; rows.push({s, i, r}); sum+=r; n++; if(r>0) wins++; }
+    }
+  });
+  rows.sort((a,b)=>b.r-a.r);
+  return {rows, n, avg:n?sum/n:0, win:n?wins/n*100:0, best:rows[0]?.r, worst:rows[rows.length-1]?.r};
+}
+function renderBacktestTab(containerId, stocksData, rules){
+  const c=$(containerId); if(!c) return;
+  if(!stocksData || !stocksData.length){ c.innerHTML='<div class="empty-row">尚無資料，請先分析。</div>'; return; }
+  const specs=allRuleSpecs(rules);
+  const rid=window.BT_RULE_ID || specs[0].id, days=window.BT_DAYS||60, horizon=window.BT_HORIZON||1;
+  const rule=specs.find(r=>r.id===rid)||specs[0];
+  const res=backtestRule(rule, stocksData, days, horizon);
+  const opts=specs.map(r=>`<option value="${r.id}" ${r.id===rid?'selected':''}>${r.id}｜${escapeHTML(r.name)}</option>`).join('');
+  c.innerHTML=`<div class="panel"><h2>回測簡報 <span class="tag">規則觸發後漲跌統計</span></h2><div class="form-grid"><div><label>回測規則</label><select class="prob-mode-select" onchange="window.BT_RULE_ID=this.value; renderBacktestTab('tab-backtest', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))">${opts}</select></div><div><label>過去N根/天</label><input type="number" value="${days}" min="20" max="500" onchange="window.BT_DAYS=parseInt(this.value)||60; renderBacktestTab('tab-backtest', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))"></div><div><label>觀察期</label><select class="prob-mode-select" onchange="window.BT_HORIZON=parseInt(this.value); renderBacktestTab('tab-backtest', ALL_STOCKS_DATA, buildRules(CURRENT_TURNOVER_FACTOR))"><option value="1" ${horizon===1?'selected':''}>次日</option><option value="5" ${horizon===5?'selected':''}>次週/5根</option><option value="10" ${horizon===10?'selected':''}>10根</option></select></div></div><div class="hint">以目前CSV內每檔股票的歷史資料做簡易事件回測。未含交易成本、滑價與除權息調整。</div></div>`+
+  `<div class="backtest-summary"><div class="metric-card"><div class="label">觸發次數</div><div class="value">${res.n}</div></div><div class="metric-card"><div class="label">平均漲跌</div><div class="value ${res.avg>=0?'score-bull':'score-bear'}">${fmt(res.avg,2)}%</div></div><div class="metric-card"><div class="label">上漲勝率</div><div class="value score-warn">${fmt(res.win,1)}%</div></div><div class="metric-card"><div class="label">最佳 / 最差</div><div class="value">${fmt(res.best,2)}% / ${fmt(res.worst,2)}%</div></div></div>`+
+  `<table><thead><tr><th>代號</th><th>名稱</th><th>觸發後漲跌</th><th>詳情</th></tr></thead><tbody>${res.rows.slice(0,80).map(x=>`<tr data-code="${x.s.code}"><td>${stockLinksHTML(x.s.code,x.s.source)}</td><td>${escapeHTML(x.s.name)}</td><td class="${x.r>=0?'up':'down'}">${fmt(x.r,2)}%</td><td><button type="button" class="mini-btn" onclick="toggleKlineDetail(this,'${x.s.code}')">K線</button></td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ============================================================
+   10. 天機閣：每日決策看板 / 產業強弱 / 風險報酬 / 規則權重
+============================================================ */
+function pctChangeN(stock, n){
+  const c0=v(stock.ind.close,0), cN=v(stock.ind.close,n);
+  return (c0!=null && cN!=null && cN!==0) ? (c0-cN)/cN*100 : null;
+}
+function signalDirectionLabel(sig){
+  if(sig.longProb>=70 && sig.shortProb<=30) return '偏多環境';
+  if(sig.shortProb>=70 && sig.longProb<=30) return '偏空環境';
+  if(sig.bull>=2 && sig.bear>=2) return '多空震盪';
+  return '中性盤整';
+}
+function marketProxyStock(stocksData){
+  return stocksData.find(s=>String(s.code)==='0050') || stocksData.find(s=>String(s.code)==='2330') || stocksData[0];
+}
+function marketFilter(stocksData, rules){
+  const proxy=marketProxyStock(stocksData||[]);
+  if(!proxy) return {label:'尚無資料', cls:'score-warn', detail:'請先匯入或抓取行情資料。', proxy:null, adjust:0};
+  const d=proxy.ind;
+  const c=v(d.close,0), ma5=v(d.ma5,0), ma10=v(d.ma10,0), ma20=v(d.ma20,0);
+  const chg5=pctChangeN(proxy,5);
+  let score=0;
+  if(allValid(c,ma20) && c>ma20) score+=1; else if(allValid(c,ma20)) score-=1;
+  if(allValid(ma5,ma10,ma20) && ma5>ma10 && ma10>ma20) score+=1.5;
+  if(allValid(ma5,ma10,ma20) && ma5<ma10 && ma10<ma20) score-=1.5;
+  if(chg5!=null && chg5>0) score+=0.5; else if(chg5!=null && chg5<0) score-=0.5;
+  let label='中性', cls='score-warn', adjust=0;
+  if(score>=2){ label='大盤偏多'; cls='score-bull'; adjust=1; }
+  else if(score<=-2){ label='大盤偏空'; cls='score-bear'; adjust=-1; }
+  return {label, cls, adjust, proxy, detail:`參考 ${proxy.code} ${proxy.name||''}，5日漲跌 ${fmt(chg5,2)}%，MA狀態 ${allValid(c,ma20)?(c>ma20?'站上MA20':'跌破MA20'):'資料不足'}`};
+}
+function riskRewardStats(stock){
+  const lv=calcSupportResistance(stock);
+  const price=lv.price;
+  const risk=(price!=null && lv.longStop!=null) ? price-lv.longStop : null;
+  const reward=(price!=null && lv.longTake!=null) ? lv.longTake-price : null;
+  const rr=(risk!=null && reward!=null && risk>0) ? reward/risk : null;
+  const distSupport=(price!=null && lv.support!=null && price!==0) ? (price-lv.support)/price*100 : null;
+  const distResistance=(price!=null && lv.resistance!=null && price!==0) ? (lv.resistance-price)/price*100 : null;
+  let grade='C', cls='score-warn', note='觀察';
+  if(rr!=null && rr>=2 && distResistance!=null && distResistance>=3){ grade='A'; cls='score-bull'; note='風報佳'; }
+  else if(rr!=null && rr>=1.5){ grade='B'; cls='score-bull'; note='可觀察'; }
+  else if(rr!=null && rr<1){ grade='D'; cls='score-bear'; note='上方空間不足'; }
+  return {lv, risk, reward, rr, distSupport, distResistance, grade, cls, note};
+}
+function weightedSignal(stock, rules, reliabilityMap){
+  const sig=evaluateStockSignals(stock, rules);
+  let weight=0;
+  sig.bullRules.forEach(n=>{ weight += (reliabilityMap && reliabilityMap[n]) || 1; });
+  sig.bearRules.forEach(n=>{ weight -= (reliabilityMap && reliabilityMap[n]) || 1; });
+  const weightedProb=clamp(Math.round(50 + weight*7 + (sig.today||0)*1.2), 5, 95);
+  return Object.assign({}, sig, {weightedScore:weight, weightedLongProb:weightedProb, weightedShortProb:100-weightedProb});
+}
+function buildRuleReliability(stocksData, rules){
+  const specs=allRuleSpecs(rules).filter(x=>!/排行榜/.test(x.name));
+  const map={};
+  specs.slice(0,40).forEach(rule=>{
+    let res={n:0,win:50,avg:0};
+    try{ res=backtestRule(rule, stocksData, 80, 1); }catch(e){}
+    let w=1;
+    if(res.n>=10){
+      if(res.win>=60) w=1.5;
+      else if(res.win>=55) w=1.25;
+      else if(res.win<48) w=0.75;
+      else w=1;
+    }
+    map[rule.name]=w;
+  });
+  return map;
+}
+function industryStrengthRows(stocksData, rules){
+  const groups=new Map();
+  (stocksData||[]).forEach(s=>{
+    const ind=normalizeIndustryName(s.industry||'未分類');
+    const sig=evaluateStockSignals(s,rules);
+    if(!groups.has(ind)) groups.set(ind,{industry:ind,count:0,longSum:0,scoreSum:0,bullish:0,bearish:0,hidden:0});
+    const g=groups.get(ind); g.count++; g.longSum+=sig.longProb; g.scoreSum+=sig.score;
+    if(sig.longProb>=60) g.bullish++; if(sig.shortProb>=60) g.bearish++;
+  });
+  const rows=Array.from(groups.values()).map(g=>{
+    const bullRate=g.count?g.bullish/g.count*100:0, bearRate=g.count?g.bearish/g.count*100:0;
+    const score=(g.longSum/g.count)*0.7 + (g.scoreSum/g.count)*4 + bullRate*0.3 - bearRate*0.25;
+    return Object.assign(g,{avgLong:g.longSum/g.count, avgScore:g.scoreSum/g.count, bullRate, bearRate, industryScore:score});
+  }).sort((a,b)=>b.industryScore-a.industryScore);
+  return rows;
+}
+function entryQuality(stock, rules, reliabilityMap, market){
+  const sig=weightedSignal(stock,rules,reliabilityMap);
+  const rr=riskRewardStats(stock);
+  let q=0;
+  q += (sig.weightedLongProb-50)*0.35;
+  q -= (sig.weightedShortProb-50)*0.25;
+  q += Math.min(20, Math.max(0, (rr.rr||0)*6));
+  if(rr.distSupport!=null && rr.distSupport<=4) q+=6;
+  if(rr.distResistance!=null && rr.distResistance>=4) q+=6;
+  if(v(stock.ind.turnover,0)!=null) q+=3;
+  if(market && market.adjust>0) q+=5;
+  if(market && market.adjust<0) q-=7;
+  const atr=v(stock.ind.atrPct,0); if(atr!=null && atr>7) q-=6;
+  let grade='C', cls='score-warn';
+  if(q>=35){grade='A'; cls='score-bull';}
+  else if(q>=22){grade='B'; cls='score-bull';}
+  else if(q<8){grade='D'; cls='score-bear';}
+  return {q,grade,cls,sig,rr};
+}
+function renderTianjiTab(containerId, stocksData, rules){
+  const c=$(containerId); if(!c) return;
+  if(!stocksData || !stocksData.length){ c.innerHTML='<div class="empty-row">尚無資料，請先抓取行情或匯入 CSV。</div>'; return; }
+  const market=marketFilter(stocksData,rules);
+  const reliability=buildRuleReliability(stocksData,rules);
+  const indRows=industryStrengthRows(stocksData,rules);
+  const rows=stocksData.map(s=>({s, q:entryQuality(s,rules,reliability,market)})).sort((a,b)=>b.q.q-a.q.q);
+  const topBull=rows.filter(x=>x.q.sig.weightedLongProb>=65 && x.q.sig.weightedShortProb<=35 && x.q.q>=18).slice(0,20);
+  const topBear=rows.filter(x=>x.q.sig.weightedShortProb>=60 || x.q.grade==='D').sort((a,b)=>b.q.sig.weightedShortProb-a.q.sig.weightedShortProb).slice(0,20);
+  const portfolioCodes=(typeof parsePortfolio==='function'?parsePortfolio():[]).map(p=>String(p.code));
+  const pfAlerts=rows.filter(x=>portfolioCodes.includes(String(x.s.code)) && (x.q.sig.weightedShortProb>=60 || x.q.grade==='D')).slice(0,20);
+  const metric=(label,value,cls,sub)=>`<div class="metric-card"><div class="label">${label}</div><div class="value ${cls||''}">${value}</div>${sub?`<div class="hint">${sub}</div>`:''}</div>`;
+  const stockRow=(x, side)=>`<tr data-code="${x.s.code}"><td><input type="checkbox" class="rowchk" value="${x.s.code}" data-source="${x.s.source||'twse'}"></td><td>${stockLinksHTML(x.s.code,x.s.source)}</td><td>${escapeHTML(x.s.name)}</td><td>${escapeHTML(normalizeIndustryName(x.s.industry||'未分類'))}</td><td class="${x.q.cls}">${x.q.grade}</td><td>${fmt(x.q.q,1)}</td><td class="score-bull">${x.q.sig.weightedLongProb}%</td><td class="score-bear">${x.q.sig.weightedShortProb}%</td><td>${fmt(x.q.rr.rr,2)}</td><td>${fmt(x.q.rr.distSupport,1)}%</td><td>${fmt(x.q.rr.distResistance,1)}%</td><td><button type="button" class="mini-btn" onclick="addStockToPortfolio('${x.s.code}', ${v(x.s.ind.close,0)||0}, '', '', '天機閣')">追蹤</button><button type="button" class="mini-btn" onclick="toggleKlineDetail(this,'${x.s.code}')">K線</button></td></tr>`;
+  c.innerHTML=`<div class="panel"><h2>天機閣決策看板 <span class="tag">市場 → 產業 → 個股 → 風報</span></h2><div class="hint">此分頁把大盤濾網、產業強弱、加權規則、進場品質與風險報酬整合成每日決策面板。加權勝率來自本CSV簡易回測統計，樣本不足時會退回原始規則權重。</div></div>`+
+  `<div class="metric-grid">${metric('市場環境',market.label,market.cls,market.detail)}${metric('分析股票數',stocksData.length,'', '已套用目前產業/股票池篩選')}${metric('多方候選',topBull.length,'score-bull','加權多方>=65、空方<=35、品質分>=18')}${metric('空方/風險',topBear.length,'score-bear','加權空方>=60 或進場品質D')}</div>`+
+  `<div class="panel"><h2>產業強弱 TOP 10 <span class="tag">先挑強產業</span></h2><table><thead><tr><th>產業</th><th>檔數</th><th>產業分</th><th>平均多方</th><th>偏多比例</th><th>偏空比例</th><th>操作</th></tr></thead><tbody>${indRows.slice(0,10).map(g=>`<tr><td>${escapeHTML(g.industry)}</td><td>${g.count}</td><td class="score-bull">${fmt(g.industryScore,1)}</td><td>${fmt(g.avgLong,1)}%</td><td class="score-bull">${fmt(g.bullRate,1)}%</td><td class="score-bear">${fmt(g.bearRate,1)}%</td><td><button type="button" class="mini-btn" onclick="filterRowsByCodes(ALL_STOCKS_DATA.filter(s=>normalizeIndustryName(s.industry||'未分類')==='${escapeHTML(g.industry)}').map(s=>s.code), document, '產業：${escapeHTML(g.industry)}')">篩選</button></td></tr>`).join('')}</tbody></table></div>`+
+  `<div class="panel"><h2>藏鋒精選 TOP 20 <span class="tag">進場品質排序</span></h2><table><thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>品質</th><th>品質分</th><th>加權多方</th><th>加權空方</th><th>風報比</th><th>距支撐</th><th>距壓力</th><th>操作</th></tr></thead><tbody>${topBull.map(stockRow).join('')||'<tr><td colspan="12" class="empty-row">目前沒有通過精選條件的股票。</td></tr>'}</tbody></table></div>`+
+  `<div class="panel"><h2>空方警示 TOP 20 <span class="tag">避險 / 減碼觀察</span></h2><table><thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>品質</th><th>品質分</th><th>加權多方</th><th>加權空方</th><th>風報比</th><th>距支撐</th><th>距壓力</th><th>操作</th></tr></thead><tbody>${topBear.map(stockRow).join('')||'<tr><td colspan="12" class="empty-row">目前沒有明顯空方警示。</td></tr>'}</tbody></table></div>`+
+  `<div class="panel"><h2>持股風險提醒 <span class="tag">依持股清單比對</span></h2>${pfAlerts.length?`<table><thead><tr><th></th><th>代號</th><th>名稱</th><th>產業</th><th>品質</th><th>品質分</th><th>加權多方</th><th>加權空方</th><th>風報比</th><th>距支撐</th><th>距壓力</th><th>操作</th></tr></thead><tbody>${pfAlerts.map(stockRow).join('')}</tbody></table>`:'<div class="empty-row">目前持股清單沒有明顯風險提醒，或尚未建立持股清單。</div>'}</div>`;
+}
+
+function renderNewsTab(containerId, stocksData, rules){
+  const c=$(containerId); if(!c) return;
+  const text=localStorage.getItem('stock_news_notes')||'';
+  c.innerHTML=`<div class="panel news-box"><h2>消息面分析 <span class="tag">半自動 / 手動摘要</span></h2><div class="hint">純本機HTML無法穩定抓取新聞全文，也不會自動判讀真假消息。這裡提供新聞連結與關鍵字筆記，可把新聞標題貼入後做粗略情緒統計；正式消息面仍建議人工確認公告、法說、重大訊息與新聞來源。</div><div class="btnrow"><button type="button" class="ghost" onclick="openUrls(['https://www.google.com/search?q=台股+重大訊息+新聞&tbm=nws','https://tw.stock.yahoo.com/news/'])">開啟市場新聞</button><button type="button" class="ghost" onclick="fillNewsCodesFromChecked()">帶入已勾選股票</button><button type="button" class="ghost" onclick="openSelectedStockNews()">開啟已勾選/輸入股票新聞</button></div><label>手動新聞代號（可選；逗號、空白或換行分隔）</label><textarea id="newsManualCodes" style="min-height:54px" placeholder="例如：2330,2454,2317；也可以先在其他分頁勾選後按「帶入已勾選股票」"></textarea><label>消息筆記 / 新聞標題貼上區</label><textarea id="newsNoteInput" placeholder="貼上新聞標題或自己的觀察，例如：台積電營收創高、外資調升目標價、公司示警需求放緩…">${escapeHTML(text)}</textarea><div class="btnrow"><button type="button" class="primary" onclick="analyzeNewsNotes()">分析消息傾向</button><button type="button" class="ghost" onclick="localStorage.setItem('stock_news_notes', $('newsNoteInput').value); alert('已保存')">保存筆記</button></div><div id="newsResult"></div></div>`;
+}
+function analyzeNewsNotes(){
+  const text=($('newsNoteInput').value||''); localStorage.setItem('stock_news_notes', text);
+  const bull=['創高','成長','調升','利多','買超','擴產','獲利','優於預期','突破','旺','增'];
+  const bear=['下修','衰退','利空','賣超','虧損','低於預期','示警','裁員','跌破','放緩','減'];
+  let b=0, s=0; bull.forEach(k=>{ const m=text.match(new RegExp(k,'g')); if(m)b+=m.length; }); bear.forEach(k=>{ const m=text.match(new RegExp(k,'g')); if(m)s+=m.length; });
+  const label=b>s?'偏多':(s>b?'偏空':'中性/需人工判讀');
+  $('newsResult').innerHTML=`<div class="metric-grid"><div class="metric-card"><div class="label">消息傾向</div><div class="value ${b>s?'score-bull':s>b?'score-bear':'score-warn'}">${label}</div></div><div class="metric-card"><div class="label">多方關鍵字</div><div class="value score-bull">${b}</div></div><div class="metric-card"><div class="label">空方關鍵字</div><div class="value score-bear">${s}</div></div></div><div class="hint">這只是關鍵字粗分，不等於事實查核或投資建議。</div>`;
+}
+function getAllCheckedStockItems(){
+  const map = new Map();
+  document.querySelectorAll('.rowchk:checked').forEach(c=>{
+    const code = String(c.value||'').trim();
+    if(!code) return;
+    const tr = c.closest('tr');
+    const stock = (window.ALL_STOCKS_DATA||[]).find(s=>String(s.code)===code);
+    map.set(code, {
+      code,
+      name: stock && stock.name ? stock.name : '',
+      source: c.dataset.source || (stock && stock.source) || (tr && tr.dataset.source) || 'twse'
+    });
+  });
+  return Array.from(map.values());
+}
+function parseNewsManualCodes(){
+  const el = $('newsManualCodes');
+  if(!el) return [];
+  const map = new Map();
+  String(el.value||'').split(/[\s,，、;；\n]+/).map(x=>x.trim()).filter(Boolean).forEach(code=>{
+    const stock = (window.ALL_STOCKS_DATA||[]).find(s=>String(s.code)===code);
+    map.set(code, {code, name: stock && stock.name ? stock.name : '', source: stock && stock.source ? stock.source : 'twse'});
+  });
+  return Array.from(map.values());
+}
+function newsSearchUrl(item){
+  const query = `${item.code}${item.name ? ' '+item.name : ''} 股票 新聞`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=nws`;
+}
+function fillNewsCodesFromChecked(){
+  const items = getAllCheckedStockItems();
+  if(!items.length){ alert('目前沒有勾選股票。請先到六脈神劍、十八漲、十絕陣、多空勝率或藏鋒榜勾選，或直接手動輸入代號。'); return; }
+  $('newsManualCodes').value = items.map(x=>x.code).join(',');
+}
+function openSelectedStockNews(){
+  let items = getAllCheckedStockItems();
+  const manual = parseNewsManualCodes();
+  manual.forEach(x=>{ if(!items.some(i=>i.code===x.code)) items.push(x); });
+  if(!items.length){ alert('請先勾選股票，或在消息面頁面的「手動新聞代號」輸入股票代號。'); return; }
+  if(items.length>12 && !confirm(`即將開啟 ${items.length} 檔股票新聞搜尋，可能會被瀏覽器擋彈出視窗。建議一次 10 檔左右，仍要繼續嗎？`)) return;
+  openUrls(items.slice(0,30).map(newsSearchUrl));
+}
+
+
+  window.getAllCheckedStockItems = getAllCheckedStockItems;
+  window.fillNewsCodesFromChecked = fillNewsCodesFromChecked;
+  window.openSelectedStockNews = openSelectedStockNews;
+  window.renderLevelsTab = renderLevelsTab;
+  window.toggleKlineDetail = toggleKlineDetail;
+  window.renderIntersectionTab = renderIntersectionTab;
+  window.syncIntersectionChecks = syncIntersectionChecks;
+  window.intersectionPreset = intersectionPreset;
+  window.renderBacktestTab = renderBacktestTab;
+  window.renderTianjiTab = renderTianjiTab;
+  window.renderNewsTab = renderNewsTab;
+  window.analyzeNewsNotes = analyzeNewsNotes;
+  window.openSelectedStockNews = openSelectedStockNews;
 
   // 更嚴格阻擋 file:// 自身跳轉；只有真正 http(s) 的 a 連結可開新頁。
   document.addEventListener('click', function(e){
