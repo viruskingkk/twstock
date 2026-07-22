@@ -171,6 +171,22 @@
   .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:10px 0;}
   .mini-btn{padding:4px 9px; font-size:11px; border-color:var(--border); background:transparent;}
   .news-box textarea{min-height:90px;}
+
+  /* ── 近期新聞卡片 ── */
+  .news-fetch-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; margin-top:12px;}
+  .news-stock-card{background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px 14px;}
+  .news-stock-card .ns-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .news-stock-card .ns-code{font-family:var(--mono); font-weight:800; font-size:14px; color:var(--amber);}
+  .news-stock-card .ns-name{font-size:12.5px; color:var(--muted);}
+  .news-item{border-top:1px solid var(--border); padding:7px 0 5px;}
+  .news-item:first-child{border-top:none;}
+  .news-item a{font-size:12.5px; color:var(--text); text-decoration:none; line-height:1.5; display:block;}
+  .news-item a:hover{color:var(--amber);}
+  .news-item .ni-meta{font-size:10.5px; color:var(--muted); margin-top:2px; font-family:var(--mono);}
+  .news-fallback-links{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+  .news-fallback-links a{font-size:11.5px; color:var(--amber); border:1px solid var(--border); border-radius:999px; padding:3px 10px; text-decoration:none; background:var(--panel);}
+  .news-fallback-links a:hover{border-color:var(--amber);}
+  .ns-loading{color:var(--muted); font-size:12px; font-style:italic; padding:6px 0;}
   .check-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; margin:10px 0;}
   .check-item{border:1px solid var(--border); background:var(--panel2); border-radius:8px; padding:7px 9px; font-size:12px;}
   .backtest-summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:10px 0 14px;}
@@ -2590,7 +2606,7 @@ function renderTianjiTab(containerId, stocksData, rules){
 function renderNewsTab(containerId, stocksData, rules){
   const c=$(containerId); if(!c) return;
   const text=localStorage.getItem('stock_news_notes')||'';
-  c.innerHTML=`<div class="panel news-box"><h2>消息面分析 <span class="tag">半自動 / 手動摘要</span></h2><div class="hint">純本機HTML無法穩定抓取新聞全文，也不會自動判讀真假消息。這裡提供新聞連結與關鍵字筆記，可把新聞標題貼入後做粗略情緒統計；正式消息面仍建議人工確認公告、法說、重大訊息與新聞來源。</div><div class="btnrow"><button type="button" class="ghost" onclick="openUrls(['https://www.google.com/search?q=台股+重大訊息+新聞&tbm=nws','https://tw.stock.yahoo.com/news/'])">開啟市場新聞</button><button type="button" class="ghost" onclick="fillNewsCodesFromChecked()">帶入已勾選股票</button><button type="button" class="ghost" onclick="openSelectedStockNews()">開啟已勾選/輸入股票新聞</button></div><label>手動新聞代號（可選；逗號、空白或換行分隔）</label><textarea id="newsManualCodes" style="min-height:54px" placeholder="例如：2330,2454,2317；也可以先在其他分頁勾選後按「帶入已勾選股票」"></textarea><label>消息筆記 / 新聞標題貼上區</label><textarea id="newsNoteInput" placeholder="貼上新聞標題或自己的觀察，例如：台積電營收創高、外資調升目標價、公司示警需求放緩…">${escapeHTML(text)}</textarea><div class="btnrow"><button type="button" class="primary" onclick="analyzeNewsNotes()">分析消息傾向</button><button type="button" class="ghost" onclick="localStorage.setItem('stock_news_notes', $('newsNoteInput').value); alert('已保存')">保存筆記</button></div><div id="newsResult"></div></div>`;
+  c.innerHTML=`<div class="panel news-box"><h2>消息面分析 <span class="tag">半自動 / 手動摘要</span></h2><div class="hint">純本機HTML無法穩定抓取新聞全文，也不會自動判讀真假消息。這裡提供新聞連結與關鍵字筆記，可把新聞標題貼入後做粗略情緒統計；正式消息面仍建議人工確認公告、法說、重大訊息與新聞來源。</div><div class="btnrow"><button type="button" class="ghost" onclick="openUrls(['https://www.google.com/search?q=台股+重大訊息+新聞&tbm=nws','https://tw.stock.yahoo.com/news/'])">開啟市場新聞</button><button type="button" class="ghost" onclick="fillNewsCodesFromChecked()">帶入已勾選股票</button><button type="button" class="ghost" onclick="openSelectedStockNews()">開啟已勾選/輸入股票新聞</button></div><label>手動新聞代號（可選；逗號、空白或換行分隔）</label><textarea id="newsManualCodes" style="min-height:54px" placeholder="例如：2330,2454,2317；也可以先在其他分頁勾選後按「帶入已勾選股票」"></textarea><div class="btnrow" style="margin-top:8px;"><button type="button" class="primary" onclick="fetchAndShowNews()">📰 顯示所選股票近 3 則新聞</button><span class="hint" style="margin:0;font-size:11px;">嘗試從 Yahoo Finance 抓取新聞標題；若 CORS 被擋則改顯示直達連結。</span></div><div id="newsFetchResult"></div><label style="margin-top:14px;display:block;">消息筆記 / 新聞標題貼上區</label><textarea id="newsNoteInput" placeholder="貼上新聞標題或自己的觀察，例如：台積電營收創高、外資調升目標價、公司示警需求放緩…">${escapeHTML(text)}</textarea><div class="btnrow"><button type="button" class="primary" onclick="analyzeNewsNotes()">分析消息傾向</button><button type="button" class="ghost" onclick="localStorage.setItem('stock_news_notes', $('newsNoteInput').value); alert('已保存')">保存筆記</button></div><div id="newsResult"></div></div>`;
 }
 function analyzeNewsNotes(){
   const text=($('newsNoteInput').value||''); localStorage.setItem('stock_news_notes', text);
