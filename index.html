@@ -170,6 +170,36 @@
   .spark-candle{width:100%; min-width:260px; height:130px; display:block; background:#11131a; border:1px solid var(--border); border-radius:8px;}
   .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:10px 0;}
   .mini-btn{padding:4px 9px; font-size:11px; border-color:var(--border); background:transparent;}
+
+  /* ── 新詳情面板 2×2 ── */
+  .det2{display:grid;grid-template-columns:3fr 2fr;grid-template-rows:auto auto;background:#0d0e12;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:6px 0;}
+  .det2-tl{grid-column:1;grid-row:1;border-right:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;}
+  .det2-tr{grid-column:2;grid-row:1;padding:13px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;}
+  .det2-bl{grid-column:1;grid-row:2;padding:12px 14px;border-right:1px solid var(--border);}
+  .det2-br{grid-column:2;grid-row:2;padding:12px 14px;}
+  .det2-sec{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;}
+  .sr2-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+  .sr2-tbl td{padding:3.5px 6px;border-bottom:1px solid #1e2028;}
+  .sr2-tbl td:nth-child(2){text-align:right;}
+  .sr2-tbl td:nth-child(3){text-align:right;font-weight:600;}
+  .sr2-tbl .r-cur td{color:var(--amber);font-weight:800;background:rgba(217,164,65,.07);}
+  .sr2-tbl .r-res td:nth-child(3){color:#e88080;}
+  .sr2-tbl .r-sup td:nth-child(3){color:#5ecba1;}
+  .sr2-tbl .r-muted td{color:var(--muted);}
+  .slbar{display:flex;justify-content:space-between;align-items:center;border-radius:7px;padding:10px 14px;margin-bottom:8px;font-family:var(--mono);}
+  .slbar.sl{background:#1a3830;border:1px solid #2f9e74;}
+  .slbar.tp{background:#3a2422;border:1px solid var(--red);}
+  .slbar .lb{font-size:14px;font-weight:800;}
+  .slbar.sl .lb{color:#5ecba1;} .slbar.tp .lb{color:#e88080;}
+  .slbar .pr{font-size:15px;font-weight:800;}
+  .slbar .pc{font-size:12px;color:var(--muted);}
+  .ns2-a{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text);font-size:12.5px;text-decoration:none;transition:.12s;}
+  .ns2-a:hover{border-color:var(--amber);color:var(--amber);text-decoration:none;}
+  .ns2-ico{width:15px;height:15px;border-radius:3px;flex-shrink:0;object-fit:contain;}
+  .ns2-ai{width:100%;padding:8px;border-radius:7px;background:#2a1f06;border:1px solid var(--amber);color:var(--amber);font-weight:700;font-size:12.5px;cursor:pointer;margin-top:4px;}
+  .ns2-ai:hover{background:#3a2d0a;}
+  .ns2-out{font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:9px;margin-top:6px;line-height:1.7;white-space:pre-wrap;max-height:160px;overflow-y:auto;}
+  .ns2-out.loading{color:var(--muted);font-style:italic;} .ns2-out.err{color:#e07070;}
   .news-box textarea{min-height:90px;}
 
   /* ── 近期新聞卡片 ── */
@@ -2342,6 +2372,134 @@ function calcSupportResistance(stock){
   const shortTake = C!=null && atr!=null ? Math.min(support==null?Infinity:support, C-atr*2.2) : support;
   return {price:C, atr, atrPct, support, resistance, longStop, longTake, shortStop, shortTake};
 }
+/* ── Pivot Point + swing 完整支撐壓力計算 ── */
+function calcSRFull(stock){
+  const d=stock.ind, n=d.close.length;
+  if(n<10) return null;
+  const C=d.close, H=d.high, L=d.low;
+  const C0=C[n-1], pH=H[n-2], pL=L[n-2], pC=C[n-2];
+  if(C0==null||pH==null||pL==null||pC==null) return null;
+  const pivot=(pH+pL+pC)/3;
+  const r1=2*pivot-pL, r2=pivot+(pH-pL);
+  const s1=2*pivot-pH, s2=pivot-(pH-pL);
+  let aSum=0,aCnt=0;
+  for(let i=1;i<Math.min(15,n);i++){
+    const h=H[n-i],l=L[n-i],pc=C[n-i-1];
+    if(h!=null&&l!=null&&pc!=null){aSum+=Math.max(h-l,Math.abs(h-pc),Math.abs(l-pc));aCnt++;}
+  }
+  const atr=aCnt?aSum/aCnt:null;
+  const look=Math.min(20,n-2), sHs=[], sLs=[];
+  for(let i=1;i<=look;i++){
+    const idx=n-1-i;
+    if(idx<1||idx>=n-1) continue;
+    if(H[idx]>H[idx-1]&&H[idx]>H[idx+1]) sHs.push(H[idx]);
+    if(L[idx]<L[idx-1]&&L[idx]<L[idx+1]) sLs.push(L[idx]);
+  }
+  const ma5=d.ma5?d.ma5[n-1]:null, ma20=d.ma20?d.ma20[n-1]:null;
+  function dedup(arr,asc){
+    arr.sort((a,b)=>asc?a-b:b-a);
+    const o=[];
+    arr.forEach(x=>{if(!o.length||Math.abs(x-o[o.length-1])/x>0.005)o.push(x);});
+    return o;
+  }
+  const resArr=dedup([r1,r2,ma5,ma20,...sHs].filter(x=>x!=null&&x>C0),true).slice(0,4);
+  const supArr=dedup([s1,s2,ma5,ma20,...sLs].filter(x=>x!=null&&x<C0),false).slice(0,4);
+  const nearSup=supArr[0]||(C0*0.95);
+  const atrStop=atr?C0-1.5*atr:null;
+  const stopLoss=Math.max(nearSup*0.98,atrStop||0,C0*0.85);
+  const risk=C0-stopLoss;
+  const nearRes=resArr[0]||(C0*1.06);
+  const takeProfit=Math.max(nearRes,C0+risk*1.5);
+  const rr=risk>0?((takeProfit-C0)/risk).toFixed(1):'—';
+  return {pivot,r1,r2,s1,s2,atr,resArr,supArr,stopLoss,takeProfit,rr,C0};
+}
+
+/* ── 大 K 線 SVG（帶 MA5/MA20 和 SR 水平線）── */
+function bigCandleSVG(stock, sr){
+  const d=stock.ind, n=d.close.length;
+  const bars=Math.min(60,n), st=n-bars;
+  const C=d.close.slice(st), O=d.open.slice(st);
+  const H=d.high.slice(st),  L=d.low.slice(st);
+  const m5=d.ma5?d.ma5.slice(st):[], m20=d.ma20?d.ma20.slice(st):[];
+  const W=520,PH=250,PL=8,PR=56,PT=16,PB=18;
+  const plotW=W-PL-PR, plotH=PH-PT-PB;
+  let minP=Infinity, maxP=-Infinity;
+  for(let i=0;i<bars;i++){
+    if(H[i]!=null) maxP=Math.max(maxP,H[i]);
+    if(L[i]!=null) minP=Math.min(minP,L[i]);
+  }
+  if(sr){
+    [...(sr.resArr||[]),...(sr.supArr||[]),sr.stopLoss,sr.takeProfit]
+      .filter(x=>x!=null).forEach(p=>{minP=Math.min(minP,p);maxP=Math.max(maxP,p);});
+  }
+  const pad=(maxP-minP)*0.07||maxP*0.05||1;
+  minP-=pad; maxP+=pad;
+  const px=i=>PL+(i+0.5)*plotW/bars;
+  const py=p=>PT+(1-(p-minP)/(maxP-minP))*plotH;
+  const bw=Math.max(2,plotW/bars*0.65);
+  let g='';
+  // Grid
+  for(let j=1;j<=3;j++){
+    const yy=PT+plotH*j/4;
+    const pv=(minP+(maxP-minP)*(1-j/4)).toFixed(1);
+    g+=`<line x1="${PL}" y1="${yy}" x2="${PL+plotW}" y2="${yy}" stroke="#181c26" stroke-width="0.8"/>`;
+    g+=`<text x="${PL+plotW+2}" y="${yy+3.5}" font-size="8.5" fill="#444" font-family="monospace">${pv}</text>`;
+  }
+  // SR 水平線
+  if(sr){
+    const rx=PL+plotW;
+    sr.resArr.forEach((p,i)=>{
+      const yy=py(p); if(yy<PT||yy>PT+plotH) return;
+      g+=`<line x1="${PL}" y1="${yy}" x2="${rx}" y2="${yy}" stroke="#e0483e" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.7"/>`;
+      g+=`<text x="${rx+3}" y="${yy+3.5}" font-size="9" fill="#e88080" font-family="monospace">R${i+1} ${p.toFixed(1)}</text>`;
+    });
+    sr.supArr.forEach((p,i)=>{
+      const yy=py(p); if(yy<PT||yy>PT+plotH) return;
+      g+=`<line x1="${PL}" y1="${yy}" x2="${rx}" y2="${yy}" stroke="#2f9e74" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.7"/>`;
+      g+=`<text x="${rx+3}" y="${yy+3.5}" font-size="9" fill="#5ecba1" font-family="monospace">S${i+1} ${p.toFixed(1)}</text>`;
+    });
+    if(sr.takeProfit!=null){
+      const yy=py(sr.takeProfit); if(yy>=PT&&yy<=PT+plotH){
+        g+=`<line x1="${PL}" y1="${yy}" x2="${rx}" y2="${yy}" stroke="#5ecba1" stroke-width="1.5" stroke-dasharray="5,2"/>`;
+        g+=`<rect x="${PL}" y="${yy-12}" width="64" height="13" fill="#1a3830" rx="3"/>`;
+        g+=`<text x="${PL+3}" y="${yy-2}" font-size="9" fill="#5ecba1" font-family="monospace" font-weight="bold">止盈 ${sr.takeProfit.toFixed(1)}</text>`;
+      }
+    }
+    if(sr.stopLoss!=null){
+      const yy=py(sr.stopLoss); if(yy>=PT&&yy<=PT+plotH){
+        g+=`<line x1="${PL}" y1="${yy}" x2="${rx}" y2="${yy}" stroke="#e0483e" stroke-width="1.5" stroke-dasharray="5,2"/>`;
+        g+=`<rect x="${PL}" y="${yy-12}" width="64" height="13" fill="#3a1e1e" rx="3"/>`;
+        g+=`<text x="${PL+3}" y="${yy-2}" font-size="9" fill="#ff7070" font-family="monospace" font-weight="bold">止損 ${sr.stopLoss.toFixed(1)}</text>`;
+      }
+    }
+  }
+  // MA 線（先畫在 K 棒後面）
+  let p5='',p20='';
+  for(let i=0;i<bars;i++){
+    if(m5[i]!=null)  p5 +=(p5 ?'L':'M')+`${px(i).toFixed(1)},${py(m5[i]).toFixed(1)} `;
+    if(m20[i]!=null) p20+=(p20?'L':'M')+`${px(i).toFixed(1)},${py(m20[i]).toFixed(1)} `;
+  }
+  if(p5)  g+=`<path d="${p5}"  stroke="#d9a441" stroke-width="1.2" fill="none"/>`;
+  if(p20) g+=`<path d="${p20}" stroke="#8b8f9b" stroke-width="1.2" fill="none"/>`;
+  // K 棒
+  for(let i=0;i<bars;i++){
+    const x=px(i),o=O[i],c=C[i],h=H[i],l=L[i];
+    if(c==null) continue;
+    const oc=o??c, col=c>=oc?'#e0483e':'#2f9e74';
+    const top=Math.min(py(oc),py(c)), bot=Math.max(py(oc),py(c)), bh=Math.max(1,bot-top);
+    if(h!=null) g+=`<line x1="${x}" y1="${py(h)}" x2="${x}" y2="${top}" stroke="${col}" stroke-width="1"/>`;
+    if(l!=null) g+=`<line x1="${x}" y1="${bot}" x2="${x}" y2="${py(l)}" stroke="${col}" stroke-width="1"/>`;
+    g+=`<rect x="${x-bw/2}" y="${top}" width="${bw}" height="${bh}" fill="${col}"/>`;
+  }
+  // Legend
+  g+=`<line x1="${PL}" y1="8" x2="${PL+14}" y2="8" stroke="#d9a441" stroke-width="1.5"/>`;
+  g+=`<text x="${PL+17}" y="11" font-size="9" fill="#d9a441" font-family="monospace">MA5</text>`;
+  g+=`<line x1="${PL+46}" y1="8" x2="${PL+60}" y2="8" stroke="#8b8f9b" stroke-width="1.5"/>`;
+  g+=`<text x="${PL+63}" y="11" font-size="9" fill="#8b8f9b" font-family="monospace">MA20</text>`;
+  return `<svg viewBox="0 0 ${W} ${PH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#0d0e12;">${g}</svg>`;
+}
+
+/* ── 保留舊版 candleSVG 供其他地方使用 ── */
 function candleSVG(stock, n){
   const d=stock.ind; n=n||36;
   const len=d.close.length, start=Math.max(0,len-n);
@@ -2370,35 +2528,137 @@ function candleSVG(stock, n){
   parts.push(`</svg>`);
   return parts.join('');
 }
+
+/* ── 新版 stockDetailHTML：2×2 佈局 ── */
 function stockDetailHTML(stock){
-  const lv=calcSupportResistance(stock), sig=evaluateStockSignals(stock, buildRules(CURRENT_TURNOVER_FACTOR||1));
-  const news=stockSiteUrls(stock.code, stock.source);
-  const q=encodeURIComponent(`${stock.code} ${stock.name} 股票 新聞`);
-  return `<div class="detail-panel">
-    <div class="rulehead"><div><div class="ruletitle">${stock.code} ${escapeHTML(stock.name)}｜詳情</div><div class="rulecond">支撐 / 壓力 / 止損 / 止盈以 ATR14 與近20根高低區推估，僅作技術風控參考。</div></div><span class="status-pill ${sig.cls}">${sig.label}</span></div>
-    <div class="detail-grid">
-      <div class="level-card"><div class="k">現價</div><div class="v">${fmt(lv.price,2)}</div></div>
-      <div class="level-card"><div class="k">支撐</div><div class="v score-bear">${fmt(lv.support,2)}</div></div>
-      <div class="level-card"><div class="k">壓力</div><div class="v score-bull">${fmt(lv.resistance,2)}</div></div>
-      <div class="level-card"><div class="k">ATR%</div><div class="v score-warn">${fmt(lv.atrPct,2)}%</div></div>
-      <div class="level-card"><div class="k">多方止損</div><div class="v score-bear">${fmt(lv.longStop,2)}</div></div>
-      <div class="level-card"><div class="k">多方止盈</div><div class="v score-bull">${fmt(lv.longTake,2)}</div></div>
-      <div class="level-card"><div class="k">空方止損</div><div class="v score-bull">${fmt(lv.shortStop,2)}</div></div>
-      <div class="level-card"><div class="k">空方止盈</div><div class="v score-bear">${fmt(lv.shortTake,2)}</div></div>
+  const sr=calcSRFull(stock);
+  const lv=calcSupportResistance(stock);
+  const sig=evaluateStockSignals(stock, buildRules(CURRENT_TURNOVER_FACTOR||1));
+  const C0=sr?sr.C0:lv.price;
+  const suffix=stock.source==='tpex'?'.TWO':'.TW';
+  const urls=stockSiteUrls(stock.code, stock.source);
+
+  // 止損止盈
+  const sl=sr?sr.stopLoss:lv.longStop;
+  const tp=sr?sr.takeProfit:lv.longTake;
+  const slPct=C0&&sl!=null?((sl-C0)/C0*100).toFixed(2):null;
+  const tpPct=C0&&tp!=null?((tp-C0)/C0*100).toFixed(2):null;
+  const rr=sr?sr.rr:'—';
+
+  // SR 表格行
+  let srRows='';
+  if(sr){
+    const fp=x=>x!=null?Number(x).toFixed(2):'—';
+    const pp=(a,b)=>a!=null&&b!=null&&b!==0?((a-b)/b*100).toFixed(2)+'%':'—';
+    sr.resArr.slice().reverse().forEach((p,i,arr)=>{
+      srRows+=`<tr class="r-res"><td>壓力${arr.length-i}</td><td>${fp(p)}</td><td>+${pp(p,C0)}</td></tr>`;
+    });
+    srRows+=`<tr class="r-cur"><td>▶ 現價</td><td>${fp(C0)}</td><td>—</td></tr>`;
+    sr.supArr.forEach((p,i)=>{
+      srRows+=`<tr class="r-sup"><td>支撐${i+1}</td><td>${fp(p)}</td><td>${pp(p,C0)}</td></tr>`;
+    });
+    srRows+=`<tr class="r-muted"><td>樞紐</td><td>${fp(sr.pivot)}</td><td></td></tr>`;
+    srRows+=`<tr class="r-muted"><td>ATR(14)</td><td>${fp(sr.atr)}</td><td></td></tr>`;
+  }
+
+  // AI 按鈕 ID
+  const aiOut=`ns2ai_${stock.code}`;
+  const aiBtn=`ns2btn_${stock.code}`;
+  const safeName=(stock.name||'').replace(/'/g,'&#39;').replace(/\\/g,'\\\\');
+
+  return `<div class="det2">
+    <div class="det2-tl">${bigCandleSVG(stock, sr)}</div>
+    <div class="det2-tr">
+      <div class="det2-sec">■ 消息面</div>
+      <a class="ns2-a" href="${urls.yahoo||`https://tw.stock.yahoo.com/quote/${stock.code}${suffix}/news`}" target="_blank" rel="noopener">
+        <img class="ns2-ico" src="https://s.yimg.com/rz/l/yahoo_en-US_f_p_142x37_2x.png" onerror="this.style.display='none'" alt="">Yahoo奇摩股市 新聞</a>
+      <a class="ns2-a" href="https://news.cnyes.com/search?keyword=${encodeURIComponent(stock.code)}" target="_blank" rel="noopener">
+        <img class="ns2-ico" src="https://news.cnyes.com/favicon.ico" onerror="this.style.display='none'" alt="">鉅亨網搜尋</a>
+      <a class="ns2-a" href="https://www.moneydj.com/KLINE/KLine.djhtm?a=${stock.code}" target="_blank" rel="noopener">
+        <img class="ns2-ico" src="https://www.moneydj.com/favicon.ico" onerror="this.style.display='none'" alt="">MoneyDJ 線圖</a>
+      <a class="ns2-a" href="https://www.google.com/search?q=${encodeURIComponent(stock.code+' '+(stock.name||'')+' 股票 新聞')}&tbm=nws" target="_blank" rel="noopener">
+        <img class="ns2-ico" src="https://www.google.com/favicon.ico" onerror="this.style.display='none'" alt="">Google 新聞</a>
+      <a class="ns2-a" href="https://www.cmoney.tw/forum/stock/${stock.code}" target="_blank" rel="noopener">
+        <img class="ns2-ico" src="https://www.cmoney.tw/favicon.ico" onerror="this.style.display='none'" alt="">CMoney 討論區</a>
+      <button class="ns2-ai" id="${aiBtn}"
+        onclick="runDetailAINews('${stock.code}','${safeName}','${aiBtn}','${aiOut}')">
+        ✨ AI 新聞分析（需填 Anthropic API Key）</button>
+      <div id="${aiOut}"></div>
     </div>
-    ${candleSVG(stock,36)}
-    <div class="btnrow"><a href="https://www.google.com/search?q=${q}&tbm=nws" target="_blank" rel="noopener">Google新聞</a><a href="${news.yahoo}" target="_blank" rel="noopener">Yahoo</a><a href="${news.goodinfo}" target="_blank" rel="noopener">Goodinfo</a><button type="button" class="track-btn" onclick="addStockToPortfolio('${stock.code}', ${lv.price==null?'null':lv.price}, null, null, '從詳情加入')">追蹤</button></div>
+    <div class="det2-bl">
+      <div class="det2-sec">📊 支撐 / 壓力</div>
+      <table class="sr2-tbl"><tbody>${srRows}</tbody></table>
+    </div>
+    <div class="det2-br">
+      <div class="det2-sec">🎯 止損 / 止盈</div>
+      <div class="slbar sl">
+        <span class="lb">止損</span>
+        <span class="pr">${sl!=null?sl.toFixed(2):'—'}</span>
+        <span class="pc">${slPct!=null?slPct+'%':'—'}</span>
+      </div>
+      <div class="slbar tp">
+        <span class="lb">止盈</span>
+        <span class="pr">${tp!=null?tp.toFixed(2):'—'}</span>
+        <span class="pc">${tpPct!=null?'+'+tpPct+'%':'—'}</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px;">⚖️ 風報比 1 : ${rr}</div>
+      <div style="font-size:10.5px;color:var(--muted);line-height:1.6;">
+        ⚠️ 由昨日 Pivot Point、swing 高低點及 ATR(14) 自動計算，僅供參考，非投資建議。
+      </div>
+      <div style="margin-top:10px;">
+        <button type="button" class="track-btn"
+          onclick="addStockToPortfolio('${stock.code}', ${C0==null?'null':C0}, null, null, '從詳情加入')">追蹤</button>
+      </div>
+    </div>
   </div>`;
 }
+
+/* ── 詳情面板內的 AI 新聞分析 ── */
+async function runDetailAINews(code, name, btnId, outId){
+  const key=(document.getElementById('apiKeyInput')||{}).value?.trim()||
+            (localStorage.getItem('anthropic_api_key')||'');
+  const outEl=document.getElementById(outId);
+  const btn=document.getElementById(btnId);
+  if(!key){
+    if(outEl){outEl.className='ns2-out err';outEl.textContent='請先在控制面板填入 Anthropic API Key（sk-ant-...）；或在首次使用後它會記住。';}
+    return;
+  }
+  localStorage.setItem('anthropic_api_key', key);
+  if(btn) btn.disabled=true;
+  if(outEl){outEl.className='ns2-out loading';outEl.textContent='Claude 正在搜尋並分析消息面，請稍候…';}
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,
+                'anthropic-version':'2023-06-01','anthropic-beta':'web-search-20250305'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:600,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:
+          `請用繁體中文，針對台灣股票「${name}（${code}）」搜尋並摘要最近2週內的重要消息面，包含：1.重大公告/新聞 2.產業動態 3.法人動向。請簡潔摘要（150字以內），最後一行給出「整體消息面偏向：偏多/偏空/中性」。`}]
+      })
+    });
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim()||'（無文字回應）';
+    if(outEl){outEl.className='ns2-out';outEl.textContent=txt;}
+  }catch(e){
+    if(outEl){outEl.className='ns2-out err';outEl.textContent='AI分析失敗：'+(e.message||e);}
+  }
+  if(btn) btn.disabled=false;
+}
+
 function toggleKlineDetail(btn, code){
   const stock=getStockByCode(code); if(!stock){ alert('找不到此股票資料'); return; }
   const tr=btn.closest('tr'); if(!tr) return;
   const next=tr.nextElementSibling;
   if(next && next.classList.contains('detail-row')){ next.remove(); return; }
   const col=tr.children.length || 10;
-  const row=document.createElement('tr'); row.className='detail-row'; row.innerHTML=`<td colspan="${col}">${stockDetailHTML(stock)}</td>`;
+  const row=document.createElement('tr'); row.className='detail-row';
+  row.innerHTML=`<td colspan="${col}">${stockDetailHTML(stock)}</td>`;
   tr.parentNode.insertBefore(row, tr.nextSibling);
 }
+
 function renderLevelsTab(containerId, stocksData, rules){
   const c=$(containerId); if(!c) return;
   if(!stocksData || !stocksData.length){ c.innerHTML='<div class="empty-row">尚無資料，請先匯入CSV或完成分析。</div>'; return; }
@@ -2659,10 +2919,90 @@ function openSelectedStockNews(){
   openUrls(items.slice(0,30).map(newsSearchUrl));
 }
 
+/* ── 近3則新聞：Yahoo Finance API → 退回連結卡片 ── */
+async function fetchYahooNews(code, source){
+  const sym = code + (source==='tpex' ? '.TWO' : '.TW');
+  // Yahoo Finance search API 帶 newsCount 參數（部分地區有 CORS）
+  const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(sym)}&newsCount=3&enableFuzzyQuery=false&lang=zh-TW&region=TW`;
+  const res = await fetch(url, {mode:'cors'});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const json = await res.json();
+  const raw = json?.news || [];
+  if(!raw.length) throw new Error('empty');
+  return raw.slice(0,3).map(n=>({
+    title: n.title || '（無標題）',
+    link: n.link ? (n.link.startsWith('http') ? n.link : 'https://finance.yahoo.com'+n.link) : `https://tw.stock.yahoo.com/quote/${sym}/news`,
+    publisher: n.publisher || '',
+    time: n.providerPublishTime ? new Date(n.providerPublishTime*1000).toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''
+  }));
+}
+
+function newsCardFallback(item){
+  const sym = item.code + (item.source==='tpex' ? '.TWO' : '.TW');
+  const q = encodeURIComponent(`${item.code} ${item.name||''} 股票`);
+  return `
+    <div class="ns-loading">無法自動抓取（CORS 限制），請點下方連結手動瀏覽：</div>
+    <div class="news-fallback-links">
+      <a href="https://tw.stock.yahoo.com/quote/${sym}/news" target="_blank" rel="noopener">Yahoo 新聞</a>
+      <a href="https://news.cnyes.com/search?keyword=${encodeURIComponent(item.code)}" target="_blank" rel="noopener">鉅亨網</a>
+      <a href="https://www.moneydj.com/KLINE/KLine.djhtm?a=${item.code}" target="_blank" rel="noopener">MoneyDJ</a>
+      <a href="https://www.google.com/search?q=${q}+新聞&tbm=nws" target="_blank" rel="noopener">Google新聞</a>
+      <a href="https://www.cmoney.tw/forum/stock/${item.code}" target="_blank" rel="noopener">CMoney</a>
+    </div>`;
+}
+
+async function fetchAndShowNews(){
+  let items = getAllCheckedStockItems();
+  const manual = parseNewsManualCodes();
+  manual.forEach(x=>{ if(!items.some(i=>i.code===x.code)) items.push(x); });
+  if(!items.length){ alert('請先勾選股票，或在「手動新聞代號」欄位輸入代號。'); return; }
+  if(items.length>15){ items=items.slice(0,15); }
+
+  const out = document.getElementById('newsFetchResult');
+  if(!out) return;
+  out.innerHTML=`<div class="news-fetch-grid">${items.map(it=>`
+    <div class="news-stock-card" id="nscard-${it.code}">
+      <div class="ns-head">
+        <span class="ns-code">${it.code}</span>
+        <span class="ns-name">${escapeHTML(it.name||'')}</span>
+      </div>
+      <div class="ns-loading" id="nsloading-${it.code}">載入中…</div>
+    </div>`).join('')}
+  </div>`;
+
+  // 並行抓取，最多同時 4 個
+  const CONC = 4;
+  let cur = 0;
+  async function worker(){
+    while(cur < items.length){
+      const item = items[cur++];
+      const loadEl = document.getElementById(`nsloading-${item.code}`);
+      const card   = document.getElementById(`nscard-${item.code}`);
+      try{
+        const news = await fetchYahooNews(item.code, item.source||'twse');
+        if(loadEl) loadEl.remove();
+        if(card){
+          news.forEach(n=>{
+            const div = document.createElement('div');
+            div.className = 'news-item';
+            div.innerHTML = `<a href="${escapeHTML(n.link)}" target="_blank" rel="noopener">${escapeHTML(n.title)}</a>`+
+              (n.publisher||n.time ? `<div class="ni-meta">${escapeHTML(n.publisher)}${n.publisher&&n.time?' · ':''}${escapeHTML(n.time)}</div>` : '');
+            card.appendChild(div);
+          });
+        }
+      }catch(e){
+        if(loadEl) loadEl.innerHTML = newsCardFallback(item);
+      }
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(CONC,items.length)},()=>worker()));
+}
+
 
   window.getAllCheckedStockItems = getAllCheckedStockItems;
   window.fillNewsCodesFromChecked = fillNewsCodesFromChecked;
   window.openSelectedStockNews = openSelectedStockNews;
+  window.fetchAndShowNews = fetchAndShowNews;
   window.renderLevelsTab = renderLevelsTab;
   window.toggleKlineDetail = toggleKlineDetail;
   window.renderIntersectionTab = renderIntersectionTab;
