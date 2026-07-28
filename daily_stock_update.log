@@ -21,3 +21,12 @@
 [2026-07-27 08:16:12] Replacing existing file: D:\twstock\history\history0724.csv
 [2026-07-27 08:16:12] Saved: D:\twstock\history\history0724.csv
 [2026-07-27 08:16:13] Running git add
+[2026-07-27 08:16:13] Running git commit: 0724
+[2026-07-27 08:16:13] Running git push
+[2026-07-27 08:16:18] Daily stock update completed
+[2026-07-27 08:16:18] ========================================
+[2026-07-27 18:00:01] ========================================
+[2026-07-27 18:00:01] Daily stock update started
+[2026-07-27 18:00:01] Removing old history.csv
+[2026-07-27 18:00:01] ERROR: 由於另一個處理序正在使用檔案 'D:\twstock\history.csv'，所以無法存取該檔案。
+[2026-07-27 18:00:01] ========================================
