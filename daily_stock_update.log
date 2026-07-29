@@ -30,3 +30,9 @@
 [2026-07-27 18:00:01] Removing old history.csv
 [2026-07-27 18:00:01] ERROR: 由於另一個處理序正在使用檔案 'D:\twstock\history.csv'，所以無法存取該檔案。
 [2026-07-27 18:00:01] ========================================
+[2026-07-28 18:00:00] ========================================
+[2026-07-28 18:00:00] Daily stock update started
+[2026-07-28 18:00:00] Running: download_common_stocks_with_capital.bat
+[2026-07-29 08:15:28] Downloader completed
+[2026-07-29 08:15:28] Saved: D:\twstock\history\history0728.csv
+[2026-07-29 08:15:28] Running git add
