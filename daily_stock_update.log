@@ -36,3 +36,14 @@
 [2026-07-29 08:15:28] Downloader completed
 [2026-07-29 08:15:28] Saved: D:\twstock\history\history0728.csv
 [2026-07-29 08:15:28] Running git add
+[2026-07-29 08:15:29] Running git commit: 0728
+[2026-07-29 08:15:29] Running git push
+[2026-07-29 08:15:33] Daily stock update completed
+[2026-07-29 08:15:33] ========================================
+[2026-07-29 18:00:00] ========================================
+[2026-07-29 18:00:00] Daily stock update started
+[2026-07-29 18:00:00] Removing old history.csv
+[2026-07-29 18:00:00] Running: download_common_stocks_with_capital.bat
+[2026-07-30 10:27:20] Downloader completed
+[2026-07-30 10:27:20] Saved: D:\twstock\history\history0729.csv
+[2026-07-30 10:27:20] Running git add
